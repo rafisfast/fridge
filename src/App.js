@@ -5,6 +5,7 @@ import './App.css';
 const clamp = (x,min,max) =>  {return Math.min(Math.max(x,min),max) }
 
 function App() {
+
   const [shapes,setShapes] = useState([{
     id: "0",
     x: window.innerWidth,
@@ -14,68 +15,23 @@ function App() {
     isDragging: false
     // isDragging: true;
   }])
-  
-  const [MoveData,setMoveData] = useState()
-  const [dragging,setDragging] = useState()
-  // click; dragging = id
-  // mousemove = (x = DeltaX) relative to stage clamped to stage
 
-    // const onMouseMove = (e) => {
-    //   console.log("moving")
-    //   if (MoveData) {
-    //     console.log(shapes)
-    //     const id = MoveData.target.id()
-    //     const s = shapes
-    //     const {x,y} = e
-    //     const shape = s[id]
-    //     shape.x = x
-    //     shape.y = y
-    //     setShapes(s)
-    //   }
-    //   // const id = MoveData.target.id()
-    //   // console.log(id,e)
-    //   // const s = shapes
-    //   // const shape = s[id]
-    //   // const [minX,maxX] = [shape.radius,(window.innerWidth*2) - shape.radius]
-    //   // const [minY,maxY] = [shape.radius,(window.innerHeight*2)- shape.radius]
-    //   // const {x,y} = e.target.getAbsolutePosition()
-    //   // shape.x = clamp(x,minX,maxX)
-    //   // shape.y = clamp(y,minY,maxY)
-    //   // console.log(clamp(e.evt.x,minY,maxY),"clamp")
-    //   // // math.clamp(z,x,y) math.min(z,x) or z > x math.max(z,y)
-    //   // // math.max(math.min(x,min),max)
-    //   // // Math.max(e.x,shape.radius)
-    //   // console.log(s[dragging])
-    //   // setShapes(s)
-    // }
-
-  // useEffect(()=> {
-  //   console.log("set")
-  //   window.addEventListener('mousemove',onMouseMove);
-  //   return () => window.removeEventListener('mousemove',onMouseMove)
-  // },[MoveData,shapes])
-
-  // const onMouseDown = (e) => {
-  //   console.log("clicked")
-  //   const id = e.target.id()
-  //   const [mX,mY] = [e.target.x,e.target.y]
-  //   // setDragging(id)
-  //   const q = "Hehe"
-  //   setMoveData(e)
-  //   // console.log(MoveData)
-  // }
+  // const [stageSize,setStageSize] = useState()
+  const stage = useRef()
 
   const dragBound = (s,p) => {
-    console.log(p)
+    console.log(stage.current.height())
+    const height = stage.current.height()
+    const width  = stage.current.width()
     return {
-      x: clamp(p.x,s,(window.innerWidth*2)-s),
-      y: clamp(p.y,s,(window.innerHeight*2)-s)
+      x: clamp(p.x,s,width-s),
+      y: clamp(p.y,s,height-s)
     }
   }
   
   return (
-    <div className="App" style={{width:(window.innerWidth*2),height:(window.innerHeight*2)}}>
-      <Stage className="Stage" width={window.innerWidth*2} height={window.innerHeight*2}>
+    <div className="App" style={{width:(window.innerWidth*2),height:(window.innerHeight*1.5)}}>
+      <Stage ref={stage} className="Stage" width={window.innerWidth*2} height={window.innerHeight*2}>
         <Layer>
           {/* <Circle x={150} y={150} stroke="black" radius={150} /> */}
           {shapes.map((shape)=> (
