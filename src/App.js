@@ -6,10 +6,14 @@ const clamp = (x,min,max) =>  {return Math.min(Math.max(x,min),max) }
 
 function App() {
 
+  const [sizeX,sizeY]  = [1920*2,1080*2]
+  const [size,setsize] = useState({width:sizeX,height:sizeY})
+  //const [Size,setSize] = useState({width:document.documentElement.clientWidth*2,height:document.documentElement.clientHeight*2})
+
   const [shapes,setShapes] = useState([{
     id: "0",
-    x: window.innerWidth,
-    y: window.innerHeight,
+    x: 200,
+    y: 200,
     radius: 150,
     stroke:'black',
     isDragging: false
@@ -18,9 +22,18 @@ function App() {
 
   // const [stageSize,setStageSize] = useState()
   const stage = useRef()
-
+  
+  useEffect(()=> {
+    window.addEventListener('resize', function(event) {
+      setsize({width:sizeX,height:sizeY})
+    }
+    )})
+    
+  const scale = (window.innerWidth) / size.width
+    
   const dragBound = (s,p) => {
-    console.log(stage.current.height())
+    s = s * scale
+    console.log(stage,stage.current.width(),p.x)
     const height = stage.current.height()
     const width  = stage.current.width()
     return {
@@ -28,10 +41,12 @@ function App() {
       y: clamp(p.y,s,height-s)
     }
   }
-  
+
+  // const scale = size.width / 800
+
   return (
-    <div className="App" style={{width:(window.innerWidth*2),height:(window.innerHeight*1.5)}}>
-      <Stage ref={stage} className="Stage" width={window.innerWidth*2} height={window.innerHeight*2}>
+    <div className="App" style={{width:(size.width),height:(size.height)}}>
+      <Stage ref={stage} className="Stage" width={size.width} height={size.height} scaleX={scale} scaleY={scale}>
         <Layer>
           {/* <Circle x={150} y={150} stroke="black" radius={150} /> */}
           {shapes.map((shape)=> (
