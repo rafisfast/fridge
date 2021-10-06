@@ -1,13 +1,18 @@
-import { StrictMode, useCallback, useEffect, useRef, useState } from 'react';
-import {Stage, Layer, Rect, Circle} from 'react-konva';
+import { StrictMode, useCallback, useEffect, useReducer, useRef, useState } from 'react';
+import {Stage, Layer, Rect, Circle,}  from 'react-konva';
+import Konva from 'konva'
 import './App.css';
+
+Konva.pixelRatio = 1
 
 const clamp = (x,min,max) =>  {return Math.min(Math.max(x,min),max) }
 
 function App() {
 
-  const [sizeX,sizeY]  = [1920*2,1080*2]
+  const [sizeX,sizeY]  = [3000,3000]
   const [size,setsize] = useState({width:sizeX,height:sizeY})
+
+  const scrollContainer = useRef()
   //const [Size,setSize] = useState({width:document.documentElement.clientWidth*2,height:document.documentElement.clientHeight*2})
 
   const [shapes,setShapes] = useState([{
@@ -27,13 +32,13 @@ function App() {
     window.addEventListener('resize', function(event) {
       setsize({width:sizeX,height:sizeY})
     }
-    )})
-    
+  )})
+
   const scale = (window.innerWidth) / size.width
     
   const dragBound = (s,p) => {
     s = s * scale
-    console.log(stage,stage.current.width(),p.x)
+    // console.log(stage,stage.current.width(),p.x)
     const height = stage.current.height()
     const width  = stage.current.width()
     return {
@@ -45,7 +50,7 @@ function App() {
   // const scale = size.width / 800
 
   return (
-    <div className="App" style={{width:(size.width),height:(size.height)}}>
+    <div ref={scrollContainer} className="App">
       <Stage ref={stage} className="Stage" width={size.width} height={size.height} scaleX={scale} scaleY={scale}>
         <Layer>
           {/* <Circle x={150} y={150} stroke="black" radius={150} /> */}
