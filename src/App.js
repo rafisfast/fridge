@@ -48,13 +48,17 @@ function App() {
     const shapeToMouse = useCallback((e)=> {  
         console.log('moving')
         const {x,y} = offset
-        console.log('moving offset', x,y)
-        console.log('moving mouse', e.clientX, e.clientY)
+        const mouseX = e.clientX + window.scrollX
+        const mouseY = e.clientY + window.scrollY
         setShape({...shape,
-            x: clamp(shape.x + e.clientX - x,0,sizeX),
-            y: clamp(shape.y + e.clientY - y,0,sizeY)
+            x: clamp(shape.x + mouseX - x,0,sizeX),
+            y: clamp(shape.y + mouseY - y,0,sizeY)
         })
     },[offset])
+
+    useEffect(()=> {
+        canvas.current.addEventListener('mouseout',()=> setdragging(false))
+    })
 
     useEffect(()=> {
         canvas.current.removeEventListener('mousemove',shapeToMouse)
@@ -65,8 +69,10 @@ function App() {
 
     const DraggingStart = (e) => {
         console.log('offset',e.clientX,e.clientY)
-        if (e.clientX <= shape.x + shape.width && e.clientX >= shape.x && e.clientY <= shape.y + shape.height && e.clientY > shape.y) {
-            setoffset({x:e.clientX,y:e.clientY})
+        const mouseX = e.clientX + window.scrollX
+        const mouseY = e.clientY + window.scrollY
+        if (mouseX <= shape.x + shape.width && mouseX >= shape.x && mouseY <= shape.y + shape.height && mouseY > shape.y) {
+            setoffset({x:mouseX,y:mouseY})
             setdragging(true)
         }
     }
