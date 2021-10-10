@@ -51,8 +51,8 @@ function App() {
         const mouseX = e.clientX + window.scrollX
         const mouseY = e.clientY + window.scrollY
         setShape({...shape,
-            x: clamp(shape.x + mouseX - x,0,sizeX),
-            y: clamp(shape.y + mouseY - y,0,sizeY)
+            x: clamp(shape.x + mouseX - x,0,sizeX - shape.width),
+            y: clamp(shape.y + mouseY - y,0,sizeY - shape.height)
         })
     },[offset])
 
