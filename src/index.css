@@ -23,8 +23,8 @@ code {
   background-repeat: repeat;
   background-size: 80px 80px;
   overflow: hidden;
-  width: 1000vw;
-  height: 1000vh;
+  width: 10000px;
+  height: 10000px;
   background-image:
     linear-gradient(to right, grey 1px, transparent 1px),
     linear-gradient(to bottom, grey 1px, transparent 1px);
