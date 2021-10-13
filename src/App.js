@@ -7,14 +7,31 @@ const ShapesContext = createContext()
 function Tile(props) {
     
     const canvas = useRef()
-    
     const [shape,setShape] = useContext(ShapesContext)
-    const [data,setdata] = useState()
+    const [style,setstyle] = useState({})
+    const [mouseoffset,setmouseoffset] = useState({x:0,y:0})
 
     useEffect(()=> {
-        const context = canvas.current.getContext('2d')
-        setdata(context.getImageData(0,0,canvas.current.width,canvas.current.height))
-    },[canvas])
+        draw()
+    },[])
+
+    const onScroll = (e) => {
+        const {deltaX: dx, deltaY: dy} = e
+        const {x: mx, y: my} = mouseoffset
+        e.preventDefault()
+        setmouseoffset({x:mx+dx,y:my+dy})
+        // console.log(mouseoffset)
+    }
+
+    useEffect(()=> {
+
+        document.addEventListener('wheel',onScroll)
+
+        return () => {
+            document.removeEventListener('wheel',onScroll)
+        }
+
+    },[mouseoffset])
 
     // console.log(props.id,'he')
 
@@ -27,45 +44,29 @@ function Tile(props) {
         // console.log(data)
         // context.putImageData(data[data.length-1],0,0)
         
+        const {x: mx,y: my} = mouseoffset
+        // console.log(mx,my)
         context.beginPath();
+        
+        // if i <= 10 = 0 else 10
 
         context.fillStyle = color;
-        context.fillRect(x - (props.id * 1000), y, width, height);
+        context.fillRect(x + mx, y  + my, width, height);
         // console.log(x + props.id*1000)
     }
 
     useEffect(()=> {
-        if (canvas.current) {
-            //console.log('new')
-            draw()
-        }
+        draw()
         return () => {
-            if (canvas.current) {
-                const context = canvas.current.getContext('2d')
-                const {x,y,width,height,color} = shape
-                // console.log('trying to fetch data', data)
-               
-                context.clearRect(0,0,canvas.current.width,canvas.current.height)
-                //context.clearRect(x,y,width,height)
-                // context.clearRect(x-2,y,2,height)
-                    // data.pop()
-                // console.log('clearing')
-            }
+            const context = canvas.current.getContext('2d')
+            context.clearRect(0,0,canvas.current.width,canvas.current.height)
         }
-    },[shape])
+    },[window,shape,mouseoffset])
     
     return (
-        <canvas ref={canvas} width ={'1000px'} height={'1000px'}  className="layers">
+        <canvas style={style} ref={canvas} width ={window.innerWidth} height={window.innerHeight}  className="layers">
         </canvas>
     )
-}
-
-function Tiles() {
-    const tiles = []
-    for (var i=0;i<10;i++) {
-        tiles.push(<Tile key={i} id={i}/>)
-    }
-    return tiles
 }
 
 function App() {
@@ -75,6 +76,8 @@ function App() {
 
     const [dragging, setdragging] = useState()
     const [offset, setoffset] = useState()
+    const [scrolloffset,setscrolloffset] = useState({x:0,y:0})
+
     const [shape, setShape] = useState(
         {
             id: "0",
@@ -85,16 +88,38 @@ function App() {
             color: 'green'
         }
     )
+
+    const onScroll = (e) => {
+        const {deltaX: dx, deltaY: dy} = e
+        const {x: mx, y: my} = scrolloffset
+        e.preventDefault()
+        setscrolloffset({x:mx+dx,y:my+dy})
+        // console.log(mouseoffset)
+    }
+
+    useEffect(()=> {
+
+        document.addEventListener('wheel',onScroll)
+
+        return () => {
+            document.removeEventListener('wheel',onScroll)
+        }
+
+    },[scrolloffset])
     
     const onMouseDown = (e) => {
-        const mouseX = e.clientX + window.scrollX
-        const mouseY = e.clientY + window.scrollY
-        if (mouseX <= shape.x + shape.width && mouseX >= shape.x && mouseY <= shape.y + shape.height && mouseY > shape.y) {
-            
+        
+        const mouseX = e.clientX 
+        const mouseY = e.clientY
+        const [shapex,shapey] = [shape.x + scrolloffset.x,shape.y + scrolloffset.y]
+
+        console.log(e.clientX,shape.x+scrolloffset.x,shape.x+scrolloffset.x+shape.width)
+        console.log(e.clientX >= shape.x + scrolloffset.x && e.clientX <= shape.x + scrolloffset.x + shape.width)
+
+        if (mouseX >= shapex && mouseX <= shapex + shape.width && mouseY >= shapey && mouseY <= shapey + shape.height) {
             setoffset({x:mouseX,y:mouseY})
             // setselected(true)
             setdragging(true)
-        } else {
         }
     }
 
@@ -102,19 +127,15 @@ function App() {
         //console.log('moving')
         // console.log(data)
         const {x,y} = offset
-        const mouseX = e.clientX + window.scrollX
-        const mouseY = e.clientY + window.scrollY
+        const mouseX = e.clientX 
+        const mouseY = e.clientY 
         setShape({...shape,
             x: shape.x + mouseX - x, //clamp(shape.x + mouseX - x,0,canvas.current.width - shape.width),
             y: shape.y + mouseY - y//clamp(shape.y + mouseY - y,0,canvas.current.height - shape.height)
         })
         // data.pop()
         // setdata([...data])
-    },[offset])
-
-    useEffect(()=> {
-        // main.current.addEventListener('mouseout',()=> setdragging(false))
-    })
+    },[offset,scrolloffset])
 
     useEffect(()=> {
         main.current.removeEventListener('mousemove',shapeToMouse)
@@ -131,7 +152,7 @@ function App() {
     return (
         <div className="App" ref={main} onMouseUp={onMouseUp} onMouseDown={onMouseDown}>
             <ShapesContext.Provider value={[shape, setShape]}>
-                <Tiles />
+                <Tile />
             </ShapesContext.Provider>
         </div>
     );
