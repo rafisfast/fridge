@@ -7,9 +7,9 @@ const BaggageContext = createContext()
 function Tile(props) {
     
     const canvas = useRef()
-    const [shape,setShape,scrolloffset,setscrolloffset] = useContext(BaggageContext)
+    const [shape,setShape,scrolloffset,setscrolloffset,scale,setscale] = useContext(BaggageContext)
     const [style,setstyle] = useState({})
-    const [scale,setscale] = useState(1)
+    // const [scale,setscale] = useState(1)
 
     useEffect(()=> {
         draw()
@@ -19,6 +19,9 @@ function Tile(props) {
         canvas.current.addEventListener('wheel',(e)=> {
             e.preventDefault()
         })
+        canvas.current.addEventListener('gesturestart',(e)=> {
+            console.log(e,'started')
+        })
     },[])
 
     const pinchMultiplier = 0.025
@@ -26,11 +29,15 @@ function Tile(props) {
     const onGesture = (e) => {
         e.preventDefault()
         // pinch and zoom out from where you are pointing
-        console.log(e,'changing')
-        setscale(scale=> clamp(scale + (e.scale > 1 ? e.scale * pinchMultiplier : - e.scale * pinchMultiplier),0.15,4))
+        // console.log(e,'changing',e.scale > 1,scale + (1 - e.scale),clamp((e.scale > 1 ? scale + (e.scale - 1) : scale - (1 - e.scale)),0.15,4))
+
+        // dragging should change scale to e.scale
+
+        setscale(clamp((e.scale > 1 ? scale + (e.scale - 1) * pinchMultiplier : scale - (1 - e.scale) * pinchMultiplier),0.15,4))
+        //e.scale > 1 ? e.scale * pinchMultiplier - scale : e.scale * pinchMultiplier + scale
         // canvas.current.style = {}
         // setstyle({transform:`scale(${scale},${scale}) translate(${e.clientX/2}px,${e.clientY/2}px)`})
-        console.log(scale,style)
+        // console.log(scale,style)
         // setscrolloffset({x:scrolloffset.x - (scale * e.clientX) * scale,y: scrolloffset.y  - (scale * e.clientX)})
         // setscale(e.scale < scale ? scale - e.scale * 0.01 : scale + e.scale * 0.01)
         // setscale(scale+(e.scale * 0.05))
@@ -72,7 +79,7 @@ function Tile(props) {
         draw()
         return () => {
             const context = canvas.current.getContext('2d')
-            const {x: mx,y: my} = scrolloffset
+            // const {x: mx,y: my} = scrolloffset
             context.clearRect(0,0,canvas.current.width/scale,canvas.current.height/scale)
             context.scale(scale,scale)
             // context.restore()
@@ -93,6 +100,7 @@ function App() {
     const [dragging, setdragging] = useState()
     const [offset, setoffset] = useState()
     const [scrolloffset,setscrolloffset] = useState({x:0,y:0})
+    const [scale,setscale] = useState(1)
 
     const [shape, setShape] = useState(
         // temp shapes dictionary
@@ -133,14 +141,15 @@ function App() {
             return
         }
 
-        const mouseX = e.clientX 
-        const mouseY = e.clientY
+        const mouseX = e.clientX / scale
+        const mouseY = e.clientY / scale
         const [shapex,shapey] = [shape.x + scrolloffset.x,shape.y + scrolloffset.y]
 
         // console.log(e.clientX,shape.x+scrolloffset.x,shape.x+scrolloffset.x+shape.width)
         // console.log(e.clientX >= shape.x + scrolloffset.x && e.clientX <= shape.x + scrolloffset.x + shape.width)
+        console.log(shapex,shapey,shape.width,shape.height)
 
-        if (mouseX >= shapex && mouseX <= shapex + shape.width && mouseY >= shapey && mouseY <= shapey + shape.height) {
+        if (mouseX >= shapex && mouseX <= shapex + (shape.width * scale) && mouseY >= shapey && mouseY <= shapey + (shape.height * scale)) {
             setoffset({x:mouseX,y:mouseY})
             // setselected(true)
             setdragging(true)
@@ -151,8 +160,8 @@ function App() {
         //console.log('moving')
         // console.log(data)
         const {x,y} = offset
-        const mouseX = e.clientX 
-        const mouseY = e.clientY 
+        const mouseX = e.clientX / scale
+        const mouseY = e.clientY  / scale
         setShape({...shape,
             x: shape.x + mouseX - x, //clamp(shape.x + mouseX - x,0,canvas.current.width - shape.width),
             y: shape.y + mouseY - y//clamp(shape.y + mouseY - y,0,canvas.current.height - shape.height)
@@ -183,7 +192,7 @@ function App() {
 
     return (
         <div className="App" ref={main} onMouseUp={onMouseUp} onMouseDown={onMouseDown}>
-            <BaggageContext.Provider value={[shape, setShape, scrolloffset, setscrolloffset]}>
+            <BaggageContext.Provider value={[shape, setShape, scrolloffset, setscrolloffset, scale, setscale]}>
                 <Tile />
             </BaggageContext.Provider>
         </div>
