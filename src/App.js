@@ -20,14 +20,16 @@ function Tile(props) {
             e.preventDefault()
         })
     },[])
+
+    const pinchMultiplier = 0.025
     
     const onGesture = (e) => {
         e.preventDefault()
         // pinch and zoom out from where you are pointing
         console.log(e,'changing')
-        setscale(scale=> clamp(scale + (e.scale > 1 ? e.scale * 0.05 : - e.scale * 0.05),1,4))
+        setscale(scale=> clamp(scale + (e.scale > 1 ? e.scale * pinchMultiplier : - e.scale * pinchMultiplier),0.15,4))
         // canvas.current.style = {}
-        setstyle({transform:`scale(${scale})`})
+        // setstyle({transform:`scale(${scale},${scale}) translate(${e.clientX/2}px,${e.clientY/2}px)`})
         console.log(scale,style)
         // setscrolloffset({x:scrolloffset.x - (scale * e.clientX) * scale,y: scrolloffset.y  - (scale * e.clientX)})
         // setscale(e.scale < scale ? scale - e.scale * 0.01 : scale + e.scale * 0.01)
@@ -48,7 +50,7 @@ function Tile(props) {
        // console.log(x,y)
        const context = canvas.current.getContext('2d')
        context.resetTransform()
-    //    context.scale(scale,scale)
+       context.scale(scale,scale)
        //    console.log(context.current.scale)
        
        // context.clearRect(x,y,)
@@ -70,9 +72,10 @@ function Tile(props) {
         draw()
         return () => {
             const context = canvas.current.getContext('2d')
+            const {x: mx,y: my} = scrolloffset
+            context.clearRect(0,0,canvas.current.width/scale,canvas.current.height/scale)
             context.scale(scale,scale)
             // context.restore()
-            context.clearRect(0,0,canvas.current.width,canvas.current.height)
         }
     },[window,shape,scrolloffset,scale])
     
