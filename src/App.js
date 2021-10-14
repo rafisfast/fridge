@@ -2,36 +2,44 @@ import React, {createContext, useCallback, useContext, useEffect, useRef, useSta
 import './App.css';
 
 const clamp = (x,min,max) =>  {return Math.min(Math.max(x,min),max) }
-const ShapesContext = createContext()
+const BaggageContext = createContext()
 
 function Tile(props) {
     
     const canvas = useRef()
-    const [shape,setShape] = useContext(ShapesContext)
+    const [shape,setShape,scrolloffset,setscrolloffset] = useContext(BaggageContext)
     const [style,setstyle] = useState({})
-    const [mouseoffset,setmouseoffset] = useState({x:0,y:0})
+    const [scale,setscale] = useState(1)
 
     useEffect(()=> {
         draw()
+        // const e = ['gesturechange','']
+        const context = canvas.current.getContext('2d')
+        context.save()
+        canvas.current.addEventListener('wheel',(e)=> {
+            e.preventDefault()
+        })
     },[])
-
-    const onScroll = (e) => {
-        const {deltaX: dx, deltaY: dy} = e
-        const {x: mx, y: my} = mouseoffset
+    
+    const onGesture = (e) => {
         e.preventDefault()
-        setmouseoffset({x:mx+dx,y:my+dy})
-        // console.log(mouseoffset)
+        // pinch and zoom out from where you are pointing
+        console.log(e,'changing')
+        setscale(scale=> clamp(scale + (e.scale > 1 ? e.scale * 0.05 : - e.scale * 0.05),1,4))
+        // canvas.current.style = {}
+        setstyle({transform:`scale(${scale})`})
+        console.log(scale,style)
+        // setscrolloffset({x:scrolloffset.x - (scale * e.clientX) * scale,y: scrolloffset.y  - (scale * e.clientX)})
+        // setscale(e.scale < scale ? scale - e.scale * 0.01 : scale + e.scale * 0.01)
+        // setscale(scale+(e.scale * 0.05))
     }
 
     useEffect(()=> {
-
-        document.addEventListener('wheel',onScroll)
-
-        return () => {
-            document.removeEventListener('wheel',onScroll)
+        canvas.current.addEventListener('gesturechange',onGesture)
+        return ()=> {
+            canvas.current.removeEventListener('gesturechange',onGesture)
         }
-
-    },[mouseoffset])
+    },[scale])
 
     // console.log(props.id,'he')
 
@@ -39,29 +47,34 @@ function Tile(props) {
         const {x,y,width,height,color} = shape
        // console.log(x,y)
        const context = canvas.current.getContext('2d')
+       context.resetTransform()
+    //    context.scale(scale,scale)
+       //    console.log(context.current.scale)
        
        // context.clearRect(x,y,)
-        // console.log(data)
-        // context.putImageData(data[data.length-1],0,0)
-        
-        const {x: mx,y: my} = mouseoffset
-        // console.log(mx,my)
-        context.beginPath();
-        
-        // if i <= 10 = 0 else 10
-
-        context.fillStyle = color;
-        context.fillRect(x + mx, y  + my, width, height);
-        // console.log(x + props.id*1000)
+       // console.log(data)
+       // context.putImageData(data[data.length-1],0,0)
+       
+       const {x: mx,y: my} = scrolloffset
+       // console.log(mx,my)
+       context.beginPath();
+       
+       // if i <= 10 = 0 else 10
+       
+       context.fillStyle = color;
+       context.fillRect(x + mx, y  + my, width, height);
+       // console.log(x + props.id*1000)
     }
-
+    
     useEffect(()=> {
         draw()
         return () => {
             const context = canvas.current.getContext('2d')
+            context.scale(scale,scale)
+            // context.restore()
             context.clearRect(0,0,canvas.current.width,canvas.current.height)
         }
-    },[window,shape,mouseoffset])
+    },[window,shape,scrolloffset,scale])
     
     return (
         <canvas style={style} ref={canvas} width ={window.innerWidth} height={window.innerHeight}  className="layers">
@@ -79,6 +92,7 @@ function App() {
     const [scrolloffset,setscrolloffset] = useState({x:0,y:0})
 
     const [shape, setShape] = useState(
+        // temp shapes dictionary
         {
             id: "0",
             x: 0,
@@ -89,32 +103,39 @@ function App() {
         }
     )
 
-    const onScroll = (e) => {
+    const onWheel = (e) => {
+        // onscroll handler
+        e.preventDefault()
+        // e.stopImmediatePropagation()
         const {deltaX: dx, deltaY: dy} = e
         const {x: mx, y: my} = scrolloffset
-        e.preventDefault()
         setscrolloffset({x:mx+dx,y:my+dy})
         // console.log(mouseoffset)
     }
 
     useEffect(()=> {
 
-        document.addEventListener('wheel',onScroll)
+        document.addEventListener('wheel',onWheel)
 
         return () => {
-            document.removeEventListener('wheel',onScroll)
+            document.removeEventListener('wheel',onWheel)
         }
 
     },[scrolloffset])
     
     const onMouseDown = (e) => {
         
+        if (dragging) {
+            setdragging(false)
+            return
+        }
+
         const mouseX = e.clientX 
         const mouseY = e.clientY
         const [shapex,shapey] = [shape.x + scrolloffset.x,shape.y + scrolloffset.y]
 
-        console.log(e.clientX,shape.x+scrolloffset.x,shape.x+scrolloffset.x+shape.width)
-        console.log(e.clientX >= shape.x + scrolloffset.x && e.clientX <= shape.x + scrolloffset.x + shape.width)
+        // console.log(e.clientX,shape.x+scrolloffset.x,shape.x+scrolloffset.x+shape.width)
+        // console.log(e.clientX >= shape.x + scrolloffset.x && e.clientX <= shape.x + scrolloffset.x + shape.width)
 
         if (mouseX >= shapex && mouseX <= shapex + shape.width && mouseY >= shapey && mouseY <= shapey + shape.height) {
             setoffset({x:mouseX,y:mouseY})
@@ -138,6 +159,14 @@ function App() {
     },[offset,scrolloffset])
 
     useEffect(()=> {
+        document.addEventListener('gesturechange',(e)=> {
+            // prevent zooming normally
+            e.preventDefault()
+            // console.log(e)
+        })
+    },[])
+
+    useEffect(()=> {
         main.current.removeEventListener('mousemove',shapeToMouse)
         if (dragging) {
             main.current.addEventListener('mousemove',shapeToMouse)
@@ -151,9 +180,9 @@ function App() {
 
     return (
         <div className="App" ref={main} onMouseUp={onMouseUp} onMouseDown={onMouseDown}>
-            <ShapesContext.Provider value={[shape, setShape]}>
+            <BaggageContext.Provider value={[shape, setShape, scrolloffset, setscrolloffset]}>
                 <Tile />
-            </ShapesContext.Provider>
+            </BaggageContext.Provider>
         </div>
     );
 }
