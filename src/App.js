@@ -62,6 +62,33 @@ function App() {
     shapes[id].scale = e.target.scale().x
     setShapes(shapes)
   }
+
+  const zoom = (e) => {
+    const scaleBy = 1.02;
+    const oldScale = stage.current.scaleX();
+
+    const pointer = stage.current.getPointerPosition();
+
+    // console.log(pointer)
+
+    const mousePointTo = {
+      x: (e.clientX - stage.current.x()) / oldScale,
+      y: (e.clientY - stage.current.y()) / oldScale,
+    };
+
+    const newScale =
+      ((e.scale) || (e.deltaY < 0 ? oldScale * scaleBy : oldScale / scaleBy))
+
+    console.log(e.clientX,e.clientY,pointer.x,pointer.y)
+
+    stage.current.scale({ x: newScale, y: newScale });
+
+    var newPos = {
+      x: pointer.x - mousePointTo.x * newScale,
+      y: pointer.y - mousePointTo.y * newScale,
+    };
+    stage.current.position(newPos);
+  }
   
   useEffect(()=> {
     // stage.current.addEventListener('wheel', function(e) {
@@ -72,30 +99,11 @@ function App() {
       const {deltaX: dx, deltaY: dy} = e.evt
       const {x,y} = stage.current.getAbsolutePosition()
 
-
       console.log(e.evt.ctrlKey)
       if (e.evt.ctrlKey) {
         e.evt.preventDefault();
-        var scaleBy = 1.01;
-        var oldScale = stage.current.scaleX();
+        zoom(e.evt)
 
-        var pointer = stage.current.getPointerPosition();
-
-        var mousePointTo = {
-          x: (pointer.x - stage.current.x()) / oldScale,
-          y: (pointer.y - stage.current.y()) / oldScale,
-        };
-
-        var newScale =
-          e.evt.deltaY < 0 ? oldScale * scaleBy : oldScale / scaleBy;
-
-        stage.current.scale({ x: newScale, y: newScale });
-
-        var newPos = {
-          x: pointer.x - mousePointTo.x * newScale,
-          y: pointer.y - mousePointTo.y * newScale,
-        };
-        stage.current.position(newPos);
       } else {
         stage.current.x(x + dx)
         stage.current.y(y + dy)
@@ -112,13 +120,18 @@ function App() {
       // console.log(e,'gesture started')
       e.preventDefault()
     })
-    
+
+  },[])
+
+  useEffect(()=> {
+    const c = canvas.current.getCanvas()._canvas
+    // console.log(c.)
     c.addEventListener('gesturechange',(e)=> {
       // console.log(e)
       e.preventDefault()
+      zoom(e)
     })
-
-  },[])
+  },[canvas])
 
   const onDragMove = (e) => {
     setdragging(e.target) 
