@@ -63,31 +63,65 @@ function App() {
     setShapes(shapes)
   }
 
+  // const zoom = (e) => {
+  //   const scaleBy = 1.01;
+  //   const oldScale = stage.current.scaleX();
+
+  //   const pointer = stage.current.getPointerPosition();
+
+  //   // console.log(pointer)
+
+  //   const mousePointTo = {
+  //     x: (pointer.x - stage.current.x()) / oldScale,
+  //     y: (pointer.y - stage.current.y()) / oldScale,
+  //   };
+
+  //   const distance = (e.scale || e.deltaY)
+
+  //   const newScale =
+  //     ((distance < 0 ? oldScale * scaleBy : oldScale / scaleBy))
+
+  //   console.log(distance,oldScale)
+
+  //   stage.current.scale({ x: newScale, y: newScale });
+
+  //   if (newScale > 0.25 || newScale < 3) {
+  //     var newPos = {
+  //       x: pointer.x - mousePointTo.x * newScale,
+  //       y: pointer.y - mousePointTo.y * newScale,
+  //     };
+  //   }
+
+  //   stage.current.position(newPos);
+  // }
+
   const zoom = (e) => {
-    const scaleBy = 1.02;
-    const oldScale = stage.current.scaleX();
-
-    const pointer = stage.current.getPointerPosition();
-
-    // console.log(pointer)
-
-    const mousePointTo = {
-      x: (e.clientX - stage.current.x()) / oldScale,
-      y: (e.clientY - stage.current.y()) / oldScale,
+    var scaleBy = 1.01;
+    var oldScale = stage.current.scaleX();
+    
+    var mousePointTo = {
+      x: stage.current.getPointerPosition().x / oldScale - stage.current.x() / oldScale,
+      y: stage.current.getPointerPosition().y / oldScale - stage.current.y() / oldScale
     };
-
-    const newScale =
-      ((e.scale) || (e.deltaY < 0 ? oldScale * scaleBy : oldScale / scaleBy))
-
-    console.log(e.clientX,e.clientY,pointer.x,pointer.y)
-
+    
+    const distance = (e.scale || e.deltaY)
+    
+    var newScale =
+      distance > 1 ? oldScale * scaleBy : oldScale / scaleBy;
     stage.current.scale({ x: newScale, y: newScale });
-
+   
+    console.log(newScale,distance,distance > 0,oldScale * scaleBy, oldScale / scaleBy)
+    
     var newPos = {
-      x: pointer.x - mousePointTo.x * newScale,
-      y: pointer.y - mousePointTo.y * newScale,
+      x:
+        -(mousePointTo.x - stage.current.getPointerPosition().x / newScale) *
+        newScale,
+      y:
+        -(mousePointTo.y - stage.current.getPointerPosition().y / newScale) *
+        newScale
     };
     stage.current.position(newPos);
+    stage.current.batchDraw();
   }
   
   useEffect(()=> {
@@ -125,7 +159,7 @@ function App() {
 
   useEffect(()=> {
     const c = canvas.current.getCanvas()._canvas
-    // console.log(c.)
+    console.log("mov")
     c.addEventListener('gesturechange',(e)=> {
       // console.log(e)
       e.preventDefault()
