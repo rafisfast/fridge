@@ -83,7 +83,6 @@ function Tile(props) {
        // console.log(x,y)
        const context = canvas.current.getContext('2d')
        context.resetTransform()
-       context.scale(scale,scale)
        //    console.log(context.current.scale)
        
        // context.clearRect(x,y,)
@@ -97,8 +96,9 @@ function Tile(props) {
        
        // if i <= 10 = 0 else 10
        context.fillStyle = color;
+       context.scale(scale,scale)
        context.translate(-vx,-vy)
-       context.fillRect(x - mx, y - my, width, height);
+       context.fillRect(x + mx, y + my, width, height);
        context.closePath()
     //    context.translate(mx,my)
        // console.log(x + props.id*1000)

@@ -2,6 +2,7 @@ import React, { StrictMode, useCallback, useEffect, useReducer, useRef, useState
 import {Stage, Layer, Rect, Circle, Transformer}  from 'react-konva';
 import Konva from 'konva'
 import './App.css';
+import { stages } from 'konva/lib/Stage';
 
 Konva.pixelRatio = 1
 
@@ -24,6 +25,7 @@ function App() {
     width: 150,
     height: 150,
     stroke:'black',
+    scale: 1,
     isDragging: false
     // isDragging: true;
   }])
@@ -51,12 +53,72 @@ function App() {
   }
   // const [stageSize,setStageSize] = useState()
   const stage = useRef()
+  const canvas = useRef()
+
+  const onTransformEnd = (e) => {
+    const id     = e.target.id()
+    shapes[id].x = e.target.x()
+    shapes[id].y = e.target.y()
+    shapes[id].scale = e.target.scale().x
+    setShapes(shapes)
+  }
   
   useEffect(()=> {
-    // window.addEventListener('resize', function(event) {
-    //   setsize({width:sizeX,height:sizeY})
+    // stage.current.addEventListener('wheel', function(e) {
+    //   console.log(e)
     // })
-  })
+    stage.current.on('wheel',(e)=> {
+      
+      const {deltaX: dx, deltaY: dy} = e.evt
+      const {x,y} = stage.current.getAbsolutePosition()
+
+
+      console.log(e.evt.ctrlKey)
+      if (e.evt.ctrlKey) {
+        e.evt.preventDefault();
+        var scaleBy = 1.01;
+        var oldScale = stage.current.scaleX();
+
+        var pointer = stage.current.getPointerPosition();
+
+        var mousePointTo = {
+          x: (pointer.x - stage.current.x()) / oldScale,
+          y: (pointer.y - stage.current.y()) / oldScale,
+        };
+
+        var newScale =
+          e.evt.deltaY < 0 ? oldScale * scaleBy : oldScale / scaleBy;
+
+        stage.current.scale({ x: newScale, y: newScale });
+
+        var newPos = {
+          x: pointer.x - mousePointTo.x * newScale,
+          y: pointer.y - mousePointTo.y * newScale,
+        };
+        stage.current.position(newPos);
+      } else {
+        stage.current.x(x + dx)
+        stage.current.y(y + dy)
+      }
+
+      console.log()
+
+    })
+
+    const c = canvas.current.getCanvas()._canvas
+    // console.log(c.)
+    
+    c.addEventListener('gesturestart',(e)=> {
+      // console.log(e,'gesture started')
+      e.preventDefault()
+    })
+    
+    c.addEventListener('gesturechange',(e)=> {
+      // console.log(e)
+      e.preventDefault()
+    })
+
+  },[])
 
   const onDragMove = (e) => {
     setdragging(e.target) 
@@ -65,8 +127,6 @@ function App() {
   const onDragEnd = (e) => {
     if (dragging) {
       const id     = e.target.id()
-      // const width  = e.target.width() 
-      // const height = e.target.height()
       const x      = e.target.x()
       const y      = e.target.y()
       shapes[id].x = x
@@ -76,29 +136,12 @@ function App() {
     }
   }
 
-  const scale = (window.innerWidth) / size.width
-    
-  const dragBound = (s,p,q) => {
-    console.log(s,q)
-   // s = s * scale
-    // console.log(stage,stage.current.width(),p.x)
-    const height = stage.current.height()
-    const width  = stage.current.width()
-
-    // console.log(document.innerWidth)
-
-    return {
-      x: clamp(p.x,s,width-s),
-      y: clamp(p.y,s,height-s)
-    }
-
-  }
   // const scale = size.width / 800
 
   return (
-    <div ref={scrollContainer} className="App">
-      <Stage ref={stage} className="Stage" width={size.width} height={size.height} >
-        <Layer>
+    <div ref={scrollContainer} onWheel={console.log('true')} className="App">
+      <Stage draggable ref={stage} className="Stage"  width={size.width} height={size.height} >
+        <Layer ref={canvas}>
           {/* <Circle x={150} y={150} stroke="black" radius={150} /> */}
           {shapes.map((shape)=> (
             //console.log("x",shape.x),
@@ -107,6 +150,7 @@ function App() {
             onMouseDown={select}
             onTap={select}
             onDragMove={onDragMove}
+            onTransformEnd={onTransformEnd}
             //onMouseDown={onMouseDown}
             // onDragStart={(e)=> onDragStart(e)}
             // onDragEnd={onDragEnd}
@@ -119,6 +163,7 @@ function App() {
             id={shape.id}
             x={shape.x} 
             y={shape.y} 
+            scale={{x:shape.scale,y:shape.scale}}
             stroke={shape.stroke}
             radius={shape.width} />
           ))}
@@ -135,18 +180,6 @@ function App() {
                 return oldBox;
               }
               
-              // console.log(newbo)
-              
-              const id    = selected.id()
-              const {x,y,height,width}  = newBox
-
-              console.log(newBox,oldBox)
-             
-              shapes[id].width = width
-              shapes[id].height = height
-              
-              setShapes(shapes)
-
               return newBox;
             }}
           />}
