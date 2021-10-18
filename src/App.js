@@ -33,11 +33,11 @@ function App() {
   const transformerRef = useRef()
   
   const select = (e) => {
-    console.log(e.target.getAbsolutePosition())
+    // console.log(e.target.getAbsolutePosition())
     const id = e.target.id()
-    console.log(e.target, stage)
+    // console.log(e.target, stage)
     if (id) {
-      console.log(e.target)
+      // console.log(e.target)
       // setselected(e.target)
       transformerRef.current.nodes([e.target])
     } else if (e.target === stage.current) {
@@ -118,6 +118,8 @@ function App() {
 
   })
 
+  const [oscale,setoscale] = useState(1)
+
   const zoom = (e) => {
     var scaleBy = 1.01;
     var oldScale = stage.current.scaleX();
@@ -128,13 +130,17 @@ function App() {
     };
     
     // const distance = (e.scale > 1 ? e || e.deltaY)
+    // console.log(e.scale - oldScale)
+
+    const delta = Math.sign(e.deltaY)
     
     var newScale =
-    (e.scale > 1 || e.deltaY > 0) ? oldScale * scaleBy : oldScale / scaleBy;
+    delta < 0 ? oldScale * scaleBy : oldScale / scaleBy;
     stage.current.scale({ x: newScale, y: newScale });
-
+    
+    console.log(e.scale,oscale)
+    setoscale(e.scale)
     // setlastdistance(distance)
-    // console.log( (e.scale - oldScale)/oldScale * 100)
     
     var newPos = {
       x:
@@ -152,16 +158,19 @@ function App() {
     const {deltaX: dx, deltaY: dy} = e.evt
     const {x,y} = stage.current.getAbsolutePosition()
     e.evt.preventDefault();
+    setoscale(dy)
 
-    console.log(e.evt.ctrlKey)
+    console.log(e.evt.ctrlKey,'holding',e.evt.wheelDelta,e.evt.wheelDeltaY)
+
     if (e.evt.ctrlKey) {
+
       zoom(e.evt)
-      drawgrid()
+      // drawgrid()
 
     } else {
       stage.current.x(x + dx)
       stage.current.y(y + dy)
-      drawgrid()
+      // drawgrid()
     }
 
     console.log(lastdistance,'distance')
@@ -170,7 +179,7 @@ function App() {
   useEffect(()=> {
     stage.current.on('wheel',onwheel)
     return ()=> stage.current.off('wheel',onwheel)
-  },[lastdistance])
+  },[oscale])
   
   useEffect(()=> {
     // stage.current.addEventListener('wheel', function(e) {
@@ -183,21 +192,12 @@ function App() {
       e.preventDefault()
     })
 
-  },[])
-
-  useEffect(()=> {
-    const c = canvas.current.getCanvas()._canvas
-    console.log("mov")
-    c.addEventListener('gesturechange',(e)=> {
-      // console.log(e)
-      e.preventDefault()
-      zoom(e)
-    })
     c.addEventListener('mousewheel',(e)=> {
-      console.log(e)
+      console.log(e, 'firign here ')
       e.preventDefault()
       // zoom(e)
     })
+
   },[])
 
   const onDragMove = (e) => {
