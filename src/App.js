@@ -31,21 +31,18 @@ function App() {
   }])
 
   const transformerRef = useRef()
-
-  useEffect(()=> {
-    if (selected) {
-      console.log(transformerRef)
-      transformerRef.current.nodes([selected])
-      transformerRef.current.getLayer().batchDraw()
-    }
-  },[selected])
-
+  
   const select = (e) => {
     console.log(e.target.getAbsolutePosition())
     const id = e.target.id()
+    console.log(e.target, stage)
     if (id) {
       console.log(e.target)
-      setselected(e.target)
+      // setselected(e.target)
+      transformerRef.current.nodes([e.target])
+    } else if (e.target === stage.current) {
+      transformerRef.current.nodes([])
+      setselected()
     }
     // console.log(e.target.id())
     // setselected(id)
@@ -95,6 +92,32 @@ function App() {
   //   stage.current.position(newPos);
   // }
 
+  const [lastdistance,setlastdistance] = useState(1)
+
+  const drawgrid = useCallback(()=> {
+    const c = canvas.current.getCanvas()._canvas
+    // const ctx = canvas.current.getContext('2d')
+
+    // let s = 28
+    // let pL = s
+    // let pT = s
+    // let pR = s
+    // let pB = s
+    
+    // ctx.strokeStyle = 'lightgrey'
+    // ctx.beginPath()
+    // for (var x = pL; x <= this.width - pR; x += s) {
+    //     ctx.moveTo(x, pT)
+    //     ctx.lineTo(x, this.height - pB)
+    // }
+    // for (var y = pT; y <= this.height - pB; y += s) {
+    //     ctx.moveTo(pL, y)
+    //     ctx.lineTo(this.width - pR, y)
+    // }
+    // ctx.stroke()
+
+  })
+
   const zoom = (e) => {
     var scaleBy = 1.01;
     var oldScale = stage.current.scaleX();
@@ -104,13 +127,14 @@ function App() {
       y: stage.current.getPointerPosition().y / oldScale - stage.current.y() / oldScale
     };
     
-    const distance = (e.scale || e.deltaY)
+    // const distance = (e.scale > 1 ? e || e.deltaY)
     
     var newScale =
-      distance > 1 ? oldScale * scaleBy : oldScale / scaleBy;
+    (e.scale > 1 || e.deltaY > 0) ? oldScale * scaleBy : oldScale / scaleBy;
     stage.current.scale({ x: newScale, y: newScale });
-   
-    console.log(newScale,distance,distance > 0,oldScale * scaleBy, oldScale / scaleBy)
+
+    // setlastdistance(distance)
+    // console.log( (e.scale - oldScale)/oldScale * 100)
     
     var newPos = {
       x:
@@ -123,32 +147,36 @@ function App() {
     stage.current.position(newPos);
     stage.current.batchDraw();
   }
+
+  const onwheel = (e) => {
+    const {deltaX: dx, deltaY: dy} = e.evt
+    const {x,y} = stage.current.getAbsolutePosition()
+    e.evt.preventDefault();
+
+    console.log(e.evt.ctrlKey)
+    if (e.evt.ctrlKey) {
+      zoom(e.evt)
+      drawgrid()
+
+    } else {
+      stage.current.x(x + dx)
+      stage.current.y(y + dy)
+      drawgrid()
+    }
+
+    console.log(lastdistance,'distance')
+  }
+
+  useEffect(()=> {
+    stage.current.on('wheel',onwheel)
+    return ()=> stage.current.off('wheel',onwheel)
+  },[lastdistance])
   
   useEffect(()=> {
     // stage.current.addEventListener('wheel', function(e) {
     //   console.log(e)
-    // })
-    stage.current.on('wheel',(e)=> {
-      
-      const {deltaX: dx, deltaY: dy} = e.evt
-      const {x,y} = stage.current.getAbsolutePosition()
-
-      console.log(e.evt.ctrlKey)
-      if (e.evt.ctrlKey) {
-        e.evt.preventDefault();
-        zoom(e.evt)
-
-      } else {
-        stage.current.x(x + dx)
-        stage.current.y(y + dy)
-      }
-
-      console.log()
-
-    })
-
+    // }
     const c = canvas.current.getCanvas()._canvas
-    // console.log(c.)
     
     c.addEventListener('gesturestart',(e)=> {
       // console.log(e,'gesture started')
@@ -165,7 +193,12 @@ function App() {
       e.preventDefault()
       zoom(e)
     })
-  },[canvas])
+    c.addEventListener('mousewheel',(e)=> {
+      console.log(e)
+      e.preventDefault()
+      // zoom(e)
+    })
+  },[])
 
   const onDragMove = (e) => {
     setdragging(e.target) 
@@ -187,7 +220,7 @@ function App() {
 
   return (
     <div ref={scrollContainer} onWheel={console.log('true')} className="App">
-      <Stage draggable ref={stage} className="Stage"  width={size.width} height={size.height} >
+      <Stage draggable ref={stage} className="Stage" width={size.width} height={size.height} onMouseDown={select} >
         <Layer ref={canvas}>
           {/* <Circle x={150} y={150} stroke="black" radius={150} /> */}
           {shapes.map((shape)=> (
@@ -214,7 +247,7 @@ function App() {
             stroke={shape.stroke}
             radius={shape.width} />
           ))}
-          {selected !== undefined &&
+          {
           <Transformer
             ref={transformerRef}
             rotateEnabled = {false}
