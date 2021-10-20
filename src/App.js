@@ -1,5 +1,5 @@
 import React, { StrictMode, useCallback, useEffect, useReducer, useRef, useState } from 'react';
-import {Stage, Layer, Rect, Circle, Transformer}  from 'react-konva';
+import {Stage, Layer, Rect, Circle, Transformer, Tween}  from 'react-konva';
 import Konva from 'konva'
 import './App.css';
 import { stages } from 'konva/lib/Stage';
@@ -134,7 +134,7 @@ function App() {
 
     console.log(e.deltaY)
     
-    const newScale = clamp(oldScale -delta/105,0.5,4)
+    const newScale = clamp(oldScale -delta/50,0.25,4)
     stage.current.scale({ x: newScale, y: newScale });
 
     console.log(newScale)
