@@ -92,7 +92,6 @@ function App() {
   //   stage.current.position(newPos);
   // }
 
-  const [lastdistance,setlastdistance] = useState(1)
 
   const drawgrid = useCallback(()=> {
     const c = canvas.current.getCanvas()._canvas
@@ -118,12 +117,11 @@ function App() {
 
   })
 
-  const [oscale,setoscale] = useState(1)
-
   const zoom = (e) => {
-    var scaleBy = 1.01;
-    var oldScale = stage.current.scaleX();
     
+    var scaleBy = 1.02;
+    var oldScale = stage.current.scaleX();
+
     var mousePointTo = {
       x: stage.current.getPointerPosition().x / oldScale - stage.current.x() / oldScale,
       y: stage.current.getPointerPosition().y / oldScale - stage.current.y() / oldScale
@@ -133,16 +131,15 @@ function App() {
     // console.log(e.scale - oldScale)
 
     const delta = Math.sign(e.deltaY)
+
+    console.log(e.deltaY)
     
-    var newScale =
-    delta < 0 ? oldScale * scaleBy : oldScale / scaleBy;
+    const newScale = clamp(oldScale -delta/105,0.5,4)
     stage.current.scale({ x: newScale, y: newScale });
-    
-    console.log(e.scale,oscale)
-    setoscale(e.scale)
-    // setlastdistance(distance)
-    
-    var newPos = {
+
+    console.log(newScale)
+        
+    const newPos = {
       x:
         -(mousePointTo.x - stage.current.getPointerPosition().x / newScale) *
         newScale,
@@ -153,17 +150,15 @@ function App() {
     stage.current.position(newPos);
     stage.current.batchDraw();
   }
-
+  
   const onwheel = (e) => {
     const {deltaX: dx, deltaY: dy} = e.evt
     const {x,y} = stage.current.getAbsolutePosition()
     e.evt.preventDefault();
-    setoscale(dy)
-
+    
     console.log(e.evt.ctrlKey,'holding',e.evt.wheelDelta,e.evt.wheelDeltaY)
-
+    
     if (e.evt.ctrlKey) {
-
       zoom(e.evt)
       // drawgrid()
 
@@ -172,14 +167,13 @@ function App() {
       stage.current.y(y + dy)
       // drawgrid()
     }
-
-    console.log(lastdistance,'distance')
   }
 
   useEffect(()=> {
     stage.current.on('wheel',onwheel)
+    stage.current.on('dblclick',(e)=>console.log(e))
     return ()=> stage.current.off('wheel',onwheel)
-  },[oscale])
+  },[])
   
   useEffect(()=> {
     // stage.current.addEventListener('wheel', function(e) {
@@ -193,10 +187,18 @@ function App() {
     })
 
     c.addEventListener('mousewheel',(e)=> {
-      console.log(e, 'firign here ')
       e.preventDefault()
       // zoom(e)
     })
+
+    c.addEventListener('touchstart',(e)=> {
+      console.log('e',e)
+    },{passive:true})
+
+    var scale = 'scale(1)';
+    document.body.style.webkitTransform =  scale;    // Chrome, Opera, Safari
+    document.body.style.msTransform =   scale;       // IE 9
+    document.body.style.transform = scale;     // General
 
   },[])
 
@@ -219,7 +221,7 @@ function App() {
   // const scale = size.width / 800
 
   return (
-    <div ref={scrollContainer} onWheel={console.log('true')} className="App">
+    <div ref={scrollContainer} className="App">
       <Stage draggable ref={stage} className="Stage" width={size.width} height={size.height} onMouseDown={select} >
         <Layer ref={canvas}>
           {/* <Circle x={150} y={150} stroke="black" radius={150} /> */}
