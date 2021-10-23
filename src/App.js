@@ -68,8 +68,8 @@ function App() {
     // drawgrid()
     const g = []
 
-    const boundsX = 2000
-    const boundsY = 2000
+    const boundsX = 4000
+    const boundsY = 4000
     
     const width = 200
     const stroke = 0.05
@@ -191,8 +191,8 @@ function App() {
     if (e.evt.ctrlKey) {
       zoom(e.evt)
     } else {
-      stage.current.x(x + dx)
-      stage.current.y(y + dy)
+      stage.current.x(x - dx)
+      stage.current.y(y - dy)
       setoffset({x:stage.current.x(),y:stage.current.y()})
       // setstyle({"background-position":` right ${-stage.current.x()}px bottom ${-stage.current.y()}px`,
       //           "background-size":`80px 80px`})
