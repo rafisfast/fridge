@@ -24,14 +24,14 @@ code {
 .App {
   /* overflow: scroll;
   overflow-y: auto; */
-  background-color: #247cff;
-  background-image: 
+  background-color: #ffffff;
+  /* background-image: 
     linear-gradient(0deg, transparent 9%, 
-            rgba(255, 255, 255, .2) 10%, rgba(255, 255, 255, .2) 12%, transparent 13%, transparent 29%),
+            rgba(255, 255, 255, .5) 10%),
     linear-gradient(90deg, transparent 9%, 
-            rgba(255, 255, 255, .2) 10%, rgba(255, 255, 255, .2) 12%, transparent 13%, transparent 29%);
+            rgba(255, 255, 255, .5) 10%);
   background-repeat: repeat;
-  background-size: 80px 80px;
+  background-size: 120px 120px; */
   width: 100vw;
   height: 100vh;
   overflow: hidden;

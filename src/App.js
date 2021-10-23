@@ -1,5 +1,6 @@
 import React, { StrictMode, useCallback, useEffect, useReducer, useRef, useState } from 'react';
 import {Stage, Layer, Rect, Circle, Transformer, Tween}  from 'react-konva';
+import Helmet from 'react-helmet';
 import Konva from 'konva'
 import './App.css';
 import { stages } from 'konva/lib/Stage';
@@ -70,24 +71,41 @@ function App() {
     const boundsX = 2000
     const boundsY = 2000
     
-    const width = 50
+    const width = 200
     const stroke = 0.05
 
+    /* 
+      width: width,
+      height: width,
+      x: i + stroke,
+      y: y + stroke,
+      stroke: stroke
+    */
+
+    var key = 0
+    
     for (var y=-boundsY;y<boundsY;y+=width) {
+      key++
       for (var i=-boundsX;i<boundsY;i+=width) {
+        key++
         g.push(
-          {
-            width: width,
-            height: width,
-            x: i + stroke,
-            y: y + stroke,
-            stroke: stroke
-          }
+          <Rect
+          key={key}
+          x={i}
+          y={y}
+          width={width}
+          height={width}
+          strokeWidth={stroke}
+          stroke="black"
+          />
         )
       }
     }
 
     setgrid(g)
+
+    // setstyle({"background-position":` right ${-stage.current.x()}px bottom ${-stage.current.y()}px`,
+    //             "background-size":`80px 80px`})
   },[])
 
   // const zoom = (e) => {
@@ -176,7 +194,8 @@ function App() {
       stage.current.x(x + dx)
       stage.current.y(y + dy)
       setoffset({x:stage.current.x(),y:stage.current.y()})
-      setstyle({"background-position":` right ${-stage.current.x()}px bottom ${-stage.current.y()}px `})
+      // setstyle({"background-position":` right ${-stage.current.x()}px bottom ${-stage.current.y()}px`,
+      //           "background-size":`80px 80px`})
       // setoffset([])
       // drawgrid()
     }
@@ -244,20 +263,12 @@ function App() {
 
   return (
     <div ref={scrollContainer} style={style} className="App">
+      <Helmet>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"></meta>
+      </Helmet>
       <Stage ref={stage} className="Stage" width={window.innerWidth} height={window.innerHeight} draggable onMouseDown={select}>
         <Layer ref={background} onMouseDown={select}>
-        {console.log('re-rendering')}
-        {/* {grid.map((outline,i)=> (
-          <Rect
-          key={i}
-          x={outline.x}
-          y={outline.y}
-          width={outline.width}
-          height={outline.height}
-          strokeWidth={outline.stroke}
-          stroke="black"
-          />
-        ))} */}
+        {grid}
         </Layer>
         <Layer ref={canvas}>
           {shapes.map((shape)=> (
