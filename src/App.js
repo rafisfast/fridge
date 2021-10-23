@@ -10,11 +10,13 @@ const clamp = (x,min,max) =>  {return Math.min(Math.max(x,min),max) }
 
 function App() {
 
-  const [sizeX,sizeY]  = [3000,3000]
-  const [size,setsize] = useState({width:sizeX,height:sizeY})
   const [selected,setselected] = useState("")
   const [dragging,setdragging] = useState()
+  const [grid,setgrid] = useState([])
+  const [offset,setoffset] = useState([])
+  const [style,setstyle] = useState({})
 
+  const background      = useRef()
   const scrollContainer = useRef()
   //const [Size,setSize] = useState({width:document.documentElement.clientWidth*2,height:document.documentElement.clientHeight*2})
 
@@ -36,11 +38,12 @@ function App() {
     // console.log(e.target.getAbsolutePosition())
     const id = e.target.id()
     // console.log(e.target, stage)
+    console.log(e.target,background.current)
     if (id) {
       // console.log(e.target)
       // setselected(e.target)
       transformerRef.current.nodes([e.target])
-    } else if (e.target === stage.current) {
+    } else if (e.target === stage.current || e.target === background.current || e.target.parent === background.current) {
       transformerRef.current.nodes([])
       setselected()
     }
@@ -59,6 +62,33 @@ function App() {
     shapes[id].scale = e.target.scale().x
     setShapes(shapes)
   }
+
+  useEffect(()=> {
+    // drawgrid()
+    const g = []
+
+    const boundsX = 2000
+    const boundsY = 2000
+    
+    const width = 50
+    const stroke = 0.05
+
+    for (var y=-boundsY;y<boundsY;y+=width) {
+      for (var i=-boundsX;i<boundsY;i+=width) {
+        g.push(
+          {
+            width: width,
+            height: width,
+            x: i + stroke,
+            y: y + stroke,
+            stroke: stroke
+          }
+        )
+      }
+    }
+
+    setgrid(g)
+  },[])
 
   // const zoom = (e) => {
   //   const scaleBy = 1.01;
@@ -94,27 +124,9 @@ function App() {
 
 
   const drawgrid = useCallback(()=> {
-    const c = canvas.current.getCanvas()._canvas
-    // const ctx = canvas.current.getContext('2d')
+   
 
-    // let s = 28
-    // let pL = s
-    // let pT = s
-    // let pR = s
-    // let pB = s
-    
-    // ctx.strokeStyle = 'lightgrey'
-    // ctx.beginPath()
-    // for (var x = pL; x <= this.width - pR; x += s) {
-    //     ctx.moveTo(x, pT)
-    //     ctx.lineTo(x, this.height - pB)
-    // }
-    // for (var y = pT; y <= this.height - pB; y += s) {
-    //     ctx.moveTo(pL, y)
-    //     ctx.lineTo(this.width - pR, y)
-    // }
-    // ctx.stroke()
-
+    // setgrid(g)
   })
 
   const zoom = (e) => {
@@ -160,18 +172,22 @@ function App() {
     
     if (e.evt.ctrlKey) {
       zoom(e.evt)
-      // drawgrid()
-
     } else {
       stage.current.x(x + dx)
       stage.current.y(y + dy)
+      setoffset({x:stage.current.x(),y:stage.current.y()})
+      setstyle({"background-position":` right ${-stage.current.x()}px bottom ${-stage.current.y()}px `})
+      // setoffset([])
       // drawgrid()
     }
+
+    // drawgrid()  
   }
 
   useEffect(()=> {
     stage.current.on('wheel',onwheel)
     stage.current.on('dblclick',(e)=>console.log(e))
+    // drawgrid()
     return ()=> stage.current.off('wheel',onwheel)
   },[])
   
@@ -181,6 +197,8 @@ function App() {
     // }
     const c = canvas.current.getCanvas()._canvas
     
+    /// INIT EVENTS
+
     c.addEventListener('gesturestart',(e)=> {
       // console.log(e,'gesture started')
       e.preventDefault()
@@ -194,6 +212,10 @@ function App() {
     c.addEventListener('touchstart',(e)=> {
       console.log('e',e)
     },{passive:true})
+
+    window.addEventListener('resize',()=> {
+      drawgrid()
+    })
 
     var scale = 'scale(1)';
     document.body.style.webkitTransform =  scale;    // Chrome, Opera, Safari
@@ -221,10 +243,23 @@ function App() {
   // const scale = size.width / 800
 
   return (
-    <div ref={scrollContainer} className="App">
-      <Stage draggable ref={stage} className="Stage" width={size.width} height={size.height} onMouseDown={select} >
+    <div ref={scrollContainer} style={style} className="App">
+      <Stage ref={stage} className="Stage" width={window.innerWidth} height={window.innerHeight} draggable onMouseDown={select}>
+        <Layer ref={background} onMouseDown={select}>
+        {console.log('re-rendering')}
+        {/* {grid.map((outline,i)=> (
+          <Rect
+          key={i}
+          x={outline.x}
+          y={outline.y}
+          width={outline.width}
+          height={outline.height}
+          strokeWidth={outline.stroke}
+          stroke="black"
+          />
+        ))} */}
+        </Layer>
         <Layer ref={canvas}>
-          {/* <Circle x={150} y={150} stroke="black" radius={150} /> */}
           {shapes.map((shape)=> (
             //console.log("x",shape.x),
             <Circle
@@ -247,7 +282,8 @@ function App() {
             y={shape.y} 
             scale={{x:shape.scale,y:shape.scale}}
             stroke={shape.stroke}
-            radius={shape.width} />
+            radius={shape.width} 
+            />
           ))}
           {
           <Transformer
