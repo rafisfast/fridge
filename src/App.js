@@ -162,9 +162,9 @@ function App() {
 
     const delta = Math.sign(e.deltaY)
 
-    console.log(e.deltaY)
+    // console.log(e.deltaY * )
     
-    const newScale = clamp(oldScale -delta/50,0.25,4)
+    const newScale = clamp(oldScale+(e.deltaY * -0.01),0.25,4)
     stage.current.scale({ x: newScale, y: newScale });
 
     console.log(newScale)
