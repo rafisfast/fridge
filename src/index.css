@@ -20,18 +20,16 @@ code {
     monospace;
 }
 
-
 .App {
   /* overflow: scroll;
   overflow-y: auto; */
-  background-color: #ffffff;
+  background-color: #e6e6e6;
   /* background-image: 
-    linear-gradient(0deg, transparent 9%, 
-            rgba(255, 255, 255, .5) 10%),
-    linear-gradient(90deg, transparent 9%, 
-            rgba(255, 255, 255, .5) 10%);
-  background-repeat: repeat;
-  background-size: 120px 120px; */
+    linear-gradient(0deg, transparent 1%, 
+            rgba(255, 255, 255, .4) 1%),
+    linear-gradient(90deg, transparent 1%, 
+            rgba(255, 255, 255, .5) 1%);
+  background-repeat: repeat; */
   width: 100vw;
   height: 100vh;
   overflow: hidden;

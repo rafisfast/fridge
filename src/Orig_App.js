@@ -160,13 +160,22 @@ function App() {
 
             const {x,y} = viewportoffset
 
-            const newscale = scale + -dy/100
             const oldscale = scale
-            const deltascale = newscale - oldscale
+            const mousePointTo = {
+                x: e.clientX / oldscale - viewportoffset.x / oldscale,
+                y: e.clientY / oldscale - viewportoffset.y / oldscale
+            };
+
+            const newscale = scale + -dy/100
             setscale(newscale)
 
             // console.log(-(e.clientX * -s))
-            setviewportoffset({x:x + (-(e.clientX * -deltascale)),y:y + (-(e.clientY * -deltascale))})
+            setviewportoffset({
+                x: (mousePointTo.x - e.clientX / newscale) *
+                    newscale,
+                y:  (mousePointTo.y - e.clientY / newscale) *
+                    newscale
+            })
             console.log(viewportoffset,newscale,dy)
             // setscrolloffset({x:((e.clientX * scale) - window.innerWidth/2),y:(((e.clientY * scale) - window.innerHeight/2))})
             // console.log('a',mx,my,scale)
@@ -234,7 +243,7 @@ function App() {
     useEffect(()=> {
         document.addEventListener('gesturechange',(e)=> {
             // prevent zooming normally
-            e.preventDefault()
+            // e.preventDefault()
             // console.log(e)
         })
     },[])

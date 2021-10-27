@@ -1,112 +1,282 @@
-import React, { StrictMode, useCallback, useEffect, useReducer, useRef, useState } from 'react';
-import {Stage, Layer, Rect, Circle, Transformer, Tween}  from 'react-konva';
-import Helmet from 'react-helmet';
-import Konva from 'konva'
-import './App.css';
-import { stages } from 'konva/lib/Stage';
+import React, {
+  createRef,
+  StrictMode,
+  useCallback,
+  useEffect,
+  useReducer,
+  useRef,
+  useState,
+} from "react";
+import { Stage, Layer, Rect, Line, Circle, Transformer } from "react-konva";
+import Helmet from "react-helmet";
+import Konva from "konva";
+import useImage from "use-image";
+import "./App.css";
+import { stages } from "konva/lib/Stage";
 
-Konva.pixelRatio = 1
+Konva.pixelRatio = 1;
 
-const clamp = (x,min,max) =>  {return Math.min(Math.max(x,min),max) }
+const clamp = (x, min, max) => {
+  return Math.min(Math.max(x, min), max);
+};
+
+const L = () => {
+  return useEffect(() => {});
+};
 
 function App() {
+  const [selected, setselected] = useState("");
+  const [dragging, setdragging] = useState();
+  const [grid, setgrid] = useState({ shapes: [] });
+  const [offset, setoffset] = useState({ x: 0, y: 0 });
+  const [style, setstyle] = useState({});
 
-  const [selected,setselected] = useState("")
-  const [dragging,setdragging] = useState()
-  const [grid,setgrid] = useState([])
-  const [offset,setoffset] = useState([])
-  const [style,setstyle] = useState({})
-
-  const background      = useRef()
-  const scrollContainer = useRef()
+  const background = useRef();
+  const scrollContainer = useRef();
   //const [Size,setSize] = useState({width:document.documentElement.clientWidth*2,height:document.documentElement.clientHeight*2})
 
-  const [shapes,setShapes] = useState([{
-    id: "0",
-    x: 200,
-    y: 200,
-    width: 150,
-    height: 150,
-    stroke:'black',
-    scale: 1,
-    isDragging: false
-    // isDragging: true;
-  }])
+  const [shapes, setShapes] = useState([
+    {
+      id: "0",
+      x: 200,
+      y: 200,
+      width: 150,
+      height: 150,
+      stroke: "black",
+      scale: 1,
+      isDragging: false,
+      // isDragging: true;
+    },
+  ]);
 
-  const transformerRef = useRef()
-  
+  const transformerRef = useRef();
+
   const select = (e) => {
     // console.log(e.target.getAbsolutePosition())
-    const id = e.target.id()
+    const id = e.target.id();
     // console.log(e.target, stage)
-    console.log(e.target,background.current)
+    console.log(e.target, background.current);
     if (id) {
       // console.log(e.target)
       // setselected(e.target)
-      transformerRef.current.nodes([e.target])
-    } else if (e.target === stage.current || e.target === background.current || e.target.parent === background.current) {
-      transformerRef.current.nodes([])
-      setselected()
+      transformerRef.current.nodes([e.target]);
+    } else if (
+      e.target === stage.current ||
+      e.target === background.current ||
+      e.target.parent === background.current
+    ) {
+      transformerRef.current.nodes([]);
+      setselected();
     }
     // console.log(e.target.id())
     // setselected(id)
     // setselected(e.target.id())
-  }
+  };
   // const [stageSize,setStageSize] = useState()
-  const stage = useRef()
-  const canvas = useRef()
+  const stage = useRef();
+  const canvas = useRef();
 
   const onTransformEnd = (e) => {
-    const id     = e.target.id()
-    shapes[id].x = e.target.x()
-    shapes[id].y = e.target.y()
-    shapes[id].scale = e.target.scale().x
-    setShapes(shapes)
-  }
+    const id = e.target.id();
+    shapes[id].x = e.target.x();
+    shapes[id].y = e.target.y();
+    shapes[id].scale = e.target.scale().x;
+    setShapes(shapes);
+  };
 
-  useEffect(()=> {
-    // drawgrid()
-    const g = []
+  const refs = useRef([]);
 
-    const boundsX = 4000
-    const boundsY = 4000
-    
-    const width = 200
-    const stroke = 0.05
+  const griddraw = (z) => {
+    // console.log(refs)
 
-    /* 
-      width: width,
-      height: width,
-      x: i + stroke,
-      y: y + stroke,
-      stroke: stroke
-    */
+    const g = { shapes: [], ref: [] };
 
-    var key = 0
-    
-    for (var y=-boundsY;y<boundsY;y+=width) {
-      key++
-      for (var i=-boundsX;i<boundsY;i+=width) {
-        key++
-        g.push(
-          <Rect
+    const boundsX = 3000;
+    const boundsY = 6000 + window.innerHeight;
+
+    const width = 120;
+    const stroke = 0.1;
+
+    var key = 0;
+
+    // ----
+    for (
+      var i = -boundsX / width;
+      i < (boundsX + window.innerHeight) / width;
+      i++
+    ) {
+      key++;
+      g.shapes.push(
+        <Line
           key={key}
-          x={i}
-          y={y}
-          width={width}
-          height={width}
+          hitStrokeWidth={0}
+          points={[0, 0, boundsX * 2 + window.innerWidth, 0]} //x1,y1,x2,y2,x3,y3
+          x={-boundsX}
+          y={i * width}
           strokeWidth={stroke}
           stroke="black"
-          />
-        )
-      }
+          ref={(e) => refs.current.push(e)}
+        />
+      );
+      // g.ref.push(ref)
+      // for (var q=0;q<2;q++) {
+      //   key++
+      //   const s = q % 2 === 0 ? stroke : 0.05
+      //   g.shapes.push(
+      //     <Line
+      //     key={key}
+      //     hitStrokeWidth={0}
+      //     points={[0,0,boundsX*2 + window.innerWidth,0]} //x1,y1,x2,y2,x3,y3
+      //     x={-boundsX}
+      //     y={i*width + (q/2 * width)}
+      //     strokeWidth={s}
+      //     stroke="black"
+      //     ref={(e)=> refs.current.push(e)}
+      //     />
+      //   )
+      // }
     }
 
-    setgrid(g)
+    // |||||
+    for (var i = -boundsY / width; i < boundsY / width; i++) {
+      key++;
+      const ref = createRef();
+      g.shapes.push(
+        <Line
+          key={key}
+          hitStrokeWidth={0}
+          points={[0, 0, 0, boundsY * 2 + window.innerHeight]} //x1,y1,x2,y2,x3,y3
+          x={i * width}
+          y={-(boundsY + window.innerHeight)}
+          strokeWidth={stroke}
+          stroke="black"
+          ref={(e) => refs.current.push(e)}
+        />
+      );
+      // g.ref.push(ref)
+      // for (var q=0;q<2;q++) {
+      //   key++
+      //   const s = q % 2 === 0 ? stroke : 0.05
+      //   g.shapes.push(
+      //     <Line
+      //     key={key}
+      //     hitStrokeWidth={0}
+      //     points={[0,0,0,boundsY*2 + window.innerHeight]} //x1,y1,x2,y2,x3,y3
+      //     x={i*width + (q/2 * width)}
+      //     y={-(boundsY + window.innerHeight) }
+      //     strokeWidth={s}
+      //     stroke="black"
+      //     ref={(e)=> refs.current.push(e)}
+      //     />
+      //   )
+      // }
+    }
 
-    // setstyle({"background-position":` right ${-stage.current.x()}px bottom ${-stage.current.y()}px`,
-    //             "background-size":`80px 80px`})
-  },[])
+    // g.shapes.map((e)=> {
+    //   console.log(e)
+    // })
+
+    // refs.current.map((e)=> {
+    //   console.log("")
+    // })
+
+    // console.log(key)
+    // for (var y=-boundsY;y<boundsY;y+=width) {
+    //   key++
+    //   for (var i=-boundsX;i<boundsY;i+=width) {
+    //     key++
+    //     g.push(
+    //       <Line
+    //       key={key}
+    //       hitStrokeWidth={0}
+    //       shadowForStrokeEnabled={false}
+    //       points={[i,y,i + width,y,i+width,y+width]} //x1,y1,x2,y2,x3,y3
+    //       strokeWidth={stroke}
+    //       stroke="black"
+    //       />
+    //     )
+    //   }
+    // }
+
+    console.log(key);
+
+    setgrid(g);
+
+    // setstyle({"backgroundPosition":` left ${stage.current.x()}px top ${stage.current.y()}px`,
+    // "backgroundSize":`${stage.current.scale().x * 80}px ${stage.current.scale().x * 80}px`})
+  };
+
+  useEffect(() => {
+    griddraw();
+  }, []);
+
+  const [oScale, setOScale] = useState(1);
+  useEffect(() => {
+    // drawgrid()
+    // console.log(oScale)
+
+    // on pan
+    // move grid relative to the offset and you should have an endless grid
+    // zoom just draw lines where they need to be inside the viewport
+
+    // const g = grid
+
+    const boundsX = 3000;
+    const boundsY = 6000 + window.innerHeight;
+
+    const width = 160;
+    const stroke = 0.1;
+
+    var i = 0;
+    // refs.current.map((e, key) => {
+    //   // console.log(e.x() > offset.x, e.x() < offset.x + (window.innerWidth*oScale), e.visible())
+    //   // console.log(window.innerWidth / oScale, window.innerWidth * oScale);
+    //   if (Math.floor(oScale) % 2 === 0) {
+    //     // console.log("is zoom");
+    //     // ||
+    //     if (
+    //       e.x() > -offset.x / oScale - width / oScale &&
+    //       e.x() <
+    //         -offset.x / oScale + window.innerWidth / oScale - width / oScale &&
+    //       e.visible()
+    //     ) {
+    //       for (var i = 1; i < 6; i++) {
+    //         // console.log(i,"numberino")
+    //         const p = refs.current.filter((q)=> q.x() === e.x() + (i / 6) * width)
+    //         if (p.length < 1) {
+    //           <Line
+    //               key={refs.current.length++}
+    //               hitStrokeWidth={0}
+    //               points={[0, 0, 0, boundsY * 2 + window.innerHeight]} //x1,y1,x2,y2
+    //               x={e.x() + (i / 6) * width}
+    //               y={-(boundsY + window.innerHeight)}
+    //               strokeWidth={stroke}
+    //               stroke="black"
+    //               ref={(e)=>refs.current.push(e)}
+    //             />
+    //         }
+    //       }
+    //       // i++
+    //       // console.log(e.points())
+    //       // e.hide()
+    //     }
+    //     // --
+    //     if (
+    //       e.y() > -offset.y / oScale - width / oScale &&
+    //       e.y() <
+    //         -offset.y / oScale + window.innerHeight / oScale - width / oScale &&
+    //       e.visible()
+    //     ) {
+    //       // i++
+    //       // e.hide()
+    //     }
+    //     // setgrid(g)
+    //     // drawgrid();
+    //   }
+    // });
+
+    console.log(i, "MOVING");
+  }, [oScale, offset]);
 
   // const zoom = (e) => {
   //   const scaleBy = 1.01;
@@ -140,183 +310,290 @@ function App() {
   //   stage.current.position(newPos);
   // }
 
+  const [backgroundoffset,setbackgroundoffset] = useState(0)
 
-  const drawgrid = useCallback(()=> {
-   
-
+  const drawgrid = useCallback(() => {
     // setgrid(g)
-  })
+  });
 
-  const zoom = (e) => {
-    
+  const zoom = (e,layer) => {
     var scaleBy = 1.02;
-    var oldScale = stage.current.scaleX();
+    var oldScale = layer.current.scaleX();
 
     var mousePointTo = {
-      x: stage.current.getPointerPosition().x / oldScale - stage.current.x() / oldScale,
-      y: stage.current.getPointerPosition().y / oldScale - stage.current.y() / oldScale
+      x:
+        stage.current.getPointerPosition().x / oldScale -
+        layer.current.x() / oldScale,
+      y:
+        stage.current.getPointerPosition().y / oldScale -
+        layer.current.y() / oldScale,
     };
-    
+
     // const distance = (e.scale > 1 ? e || e.deltaY)
     // console.log(e.scale - oldScale)
 
-    const delta = Math.sign(e.deltaY)
+    const delta = Math.sign(e.deltaY);
 
     // console.log(e.deltaY * )
-    
-    const newScale = clamp(oldScale+(e.deltaY * -0.01),0.25,4)
-    stage.current.scale({ x: newScale, y: newScale });
 
-    console.log(newScale)
-        
+    const newScale = clamp(oldScale + -e.deltaY / 100, 0.25, 32);
+    layer.current.scale({ x: newScale, y: newScale });
+    
     const newPos = {
       x:
-        -(mousePointTo.x - stage.current.getPointerPosition().x / newScale) *
-        newScale,
+      -(mousePointTo.x - stage.current.getPointerPosition().x / newScale) *
+      newScale,
       y:
-        -(mousePointTo.y - stage.current.getPointerPosition().y / newScale) *
-        newScale
+      -(mousePointTo.y - stage.current.getPointerPosition().y / newScale) *
+      newScale,
     };
-    stage.current.position(newPos);
-    stage.current.batchDraw();
-  }
+    layer.current.position(newPos)
+    // stage.current.batchDraw();
+
+  };
   
   const onwheel = (e) => {
-    const {deltaX: dx, deltaY: dy} = e.evt
-    const {x,y} = stage.current.getAbsolutePosition()
+    const { deltaX: dx, deltaY: dy } = e.evt;
+    // const { x: sx, y: sy } = stage.current.getAbsolutePosition();
     e.evt.preventDefault();
-    
-    console.log(e.evt.ctrlKey,'holding',e.evt.wheelDelta,e.evt.wheelDeltaY)
-    
+
+    // console.log(e.evt.ctrlKey,'holding',e.evt.wheelDelta,e.evt.wheelDeltaY)
+
     if (e.evt.ctrlKey) {
-      zoom(e.evt)
+      zoom(e.evt,canvas);
+
+      const current_scale = background.current.scaleX()
+      const bounds = {lower:0.25,higher:32}
+      
+      console.log('s',canvas.current.scaleX())
+      zoom(e.evt,background);
+
+      // if (Math.floor(current_scale) % 3 === 0 && current_scale > 1) {
+      //   console.log("increasing",current_scale)
+      //   background.current.scale({x:.25,y:.25})
+      //   background.current.position({x:0,y:0})
+      // // } else if (Math.floor(current_scale) < 1 && Math.floor(canvas.current.scaleX()) > 1) {
+      // //   console.log("reducing")
+      // //   background.current.position({x:0,y:0})
+      // //   background.current.scale({x:2.99,y:2.99})
+      // } else if (canvas.current.scaleX() > bounds.lower ) {
+      // }
+      
+      // refs.current.map((e)=> {
+      //   e.fillPatternScale(stage.current.scale())
+      // })
+      // console.log(stage.current.scale().x)
+      // refs.current.map((e)=> {
+      //   e.scale({x: stage.current.scale().x * 4,y: stage.current.scale().x * 4})
+      // })
     } else {
-      stage.current.x(x - dx)
-      stage.current.y(y - dy)
-      setoffset({x:stage.current.x(),y:stage.current.y()})
-      // setstyle({"background-position":` right ${-stage.current.x()}px bottom ${-stage.current.y()}px`,
-      //           "background-size":`80px 80px`})
+      // console.log(stage.current.position())
+      // stage.current.x(x - dx)
+      // stage.current.y(y - dy)
+      const boundx = 3000 * stage.current.scale().x;
+      const boundy = 3000 * stage.current.scale().y;
+      
+      const layers = [canvas,background]
+
+      for (var i=0;i<layers.length;i++) { 
+        const layer = layers[i]
+        const {x,y} = layer.current.getAbsolutePosition()
+        // layer.current.x(x - dx)
+        layer.current.x(clamp(x - dx, -(boundx - window.innerWidth), boundx));
+        layer.current.y(clamp(y - dy, -(boundy - window.innerHeight), boundy));
+      }
+
+      // setoffset({ x: stage.current.x(), y: stage.current.y() });
+
+      // refs.current.map((e) => {
+      //   if (
+      //     stage.current.x() > e.x() &&
+      //     stage.current.y() > e.y() &&
+      //     window.innerWidth + stage.current.x() < e.x() &&
+      //     window.innerHeight + stage.current.y() < e.y()
+      //   ) {
+      //     console.log("hiding");
+      //     e.hide();
+      //   }
+      // });
+
       // setoffset([])
       // drawgrid()
     }
 
-    // drawgrid()  
-  }
+    // zoom in
+    // inner grid becomes same stroke as outer grid
+    // zoom in more
+    // inner grid becomes same stroke as outer grid
+    // zoom in more
+    // inner grid becomes same stroke as outer grid
 
-  useEffect(()=> {
-    stage.current.on('wheel',onwheel)
-    stage.current.on('dblclick',(e)=>console.log(e))
+    //
+    setOScale(stage.current.scale().x);
+
+    const nScale = Math.floor(stage.current.scale().x);
+    if (nScale % 1 === 0 && nScale != oScale) {
+      refs.current.map((e, i) => {
+        if (i % 2 === 0) {
+          // e.hide()
+        }
+        if (nScale >= 3) {
+          e.strokeWidth(0.05);
+        }
+      });
+      if (nScale % 2 === 0) {
+        // griddraw(nScale)
+      }
+      // setOScale(nScale)
+      // const g = grid.slice()
+      // console.log(g)
+      // g[0].map((item)=> {
+      //   item.props.strokeWidth=5
+      // })
+      // setgrid(g)
+      // console.log(refs.current.map((e)=>{
+      // // e.hide()
+      // }))
+      console.log("zoomed", nScale, oScale);
+    }
+    // griddraw()
+
     // drawgrid()
-    return ()=> stage.current.off('wheel',onwheel)
-  },[])
-  
-  useEffect(()=> {
+  };
+
+  useEffect(() => {
+    stage.current.on("wheel", onwheel);
+    // drawgrid()
+    return () => stage.current.off("wheel", onwheel);
+  }, [oScale, grid, refs,backgroundoffset]);
+
+  useEffect(() => {
     // stage.current.addEventListener('wheel', function(e) {
     //   console.log(e)
     // }
-    const c = canvas.current.getCanvas()._canvas
-    
+    const c = canvas.current.getCanvas()._canvas;
+
     /// INIT EVENTS
 
-    c.addEventListener('gesturestart',(e)=> {
+    c.addEventListener("gesturestart", (e) => {
       // console.log(e,'gesture started')
-      e.preventDefault()
-    })
+      e.preventDefault();
+    });
 
-    c.addEventListener('mousewheel',(e)=> {
-      e.preventDefault()
+    c.addEventListener("mousewheel", (e) => {
+      e.preventDefault();
       // zoom(e)
-    })
+    });
 
-    c.addEventListener('touchstart',(e)=> {
-      console.log('e',e)
-    },{passive:true})
+    c.addEventListener(
+      "touchstart",
+      (e) => {
+        console.log("e", e);
+      },
+      { passive: true }
+    );
 
-    window.addEventListener('resize',()=> {
-      drawgrid()
-    })
+    window.addEventListener("resize", () => {
+      drawgrid();
+    });
 
-    var scale = 'scale(1)';
-    document.body.style.webkitTransform =  scale;    // Chrome, Opera, Safari
-    document.body.style.msTransform =   scale;       // IE 9
-    document.body.style.transform = scale;     // General
-
-  },[])
+    var scale = "scale(1)";
+    document.body.style.webkitTransform = scale; // Chrome, Opera, Safari
+    document.body.style.msTransform = scale; // IE 9
+    document.body.style.transform = scale; // General
+  }, []);
 
   const onDragMove = (e) => {
-    setdragging(e.target) 
-  }
+    setdragging(e.target);
+  };
 
   const onDragEnd = (e) => {
     if (dragging) {
-      const id     = e.target.id()
-      const x      = e.target.x()
-      const y      = e.target.y()
-      shapes[id].x = x
-      shapes[id].y = y
-      setShapes(shapes)
-      setdragging()
+      const id = e.target.id();
+      const x = e.target.x();
+      const y = e.target.y();
+      shapes[id].x = x;
+      shapes[id].y = y;
+      setShapes(shapes);
+      setdragging();
     }
-  }
+  };
 
   // const scale = size.width / 800
 
   return (
     <div ref={scrollContainer} style={style} className="App">
       <Helmet>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"></meta>
+        <meta
+          name="viewport"
+          content="width=device-width, initial-scale=1.0, user-scalable=no"
+        ></meta>
       </Helmet>
-      <Stage ref={stage} className="Stage" width={window.innerWidth} height={window.innerHeight} draggable onMouseDown={select}>
-        <Layer ref={background} onMouseDown={select}>
-        {grid}
+      <Stage
+        ref={stage}
+        className="Stage"
+        width={window.innerWidth}
+        height={window.innerHeight}
+        draggable
+        onMouseDown={select}
+      >
+        <Layer ref={background}>
+          {grid.shapes}
+          {/* {console.log('rerenering first layer')} */}
         </Layer>
         <Layer ref={canvas}>
-          {shapes.map((shape)=> (
+          {/* {console.log('rerenering second layer')} */}
+          {shapes.map((shape) => (
             //console.log("x",shape.x),
             <Circle
-            _useStrictMode
-            onMouseDown={select}
-            onTap={select}
-            onDragMove={onDragMove}
-            onTransformEnd={onTransformEnd}
-            //onMouseDown={onMouseDown}
-            // onDragStart={(e)=> onDragStart(e)}
-            // onDragEnd={onDragEnd}
-            // onDragMove={onDrageMove}
-            draggable
-            onDragEnd={onDragEnd}
-            onTransform={(e)=>console.log(e)}
-            // dragBoundFunc={(p)=>dragBound(shape.width,p,shape.height)}
-            key={shape.id} 
-            id={shape.id}
-            x={shape.x} 
-            y={shape.y} 
-            scale={{x:shape.scale,y:shape.scale}}
-            stroke={shape.stroke}
-            radius={shape.width} 
+              _useStrictMode
+              onMouseDown={select}
+              onTap={select}
+              onDragMove={onDragMove}
+              onTransformEnd={onTransformEnd}
+              //onMouseDown={onMouseDown}
+              // onDragStart={(e)=> onDragStart(e)}
+              // onDragEnd={onDragEnd}
+              // onDragMove={onDrageMove}
+              draggable
+              onDragEnd={onDragEnd}
+              onTransform={(e) => console.log(e)}
+              // dragBoundFunc={(p)=>dragBound(shape.width,p,shape.height)}
+              key={shape.id}
+              id={shape.id}
+              x={shape.x}
+              y={shape.y}
+              scale={{ x: shape.scale, y: shape.scale }}
+              stroke={shape.stroke}
+              radius={shape.width}
             />
           ))}
           {
-          <Transformer
-            ref={transformerRef}
-            rotateEnabled = {false}
-            enabledAnchors={['top-right','top-left','bottom-left','bottom-right']}
-           // onTransformEnd={onTransformEnd}
-            boundBoxFunc={(oldBox, newBox) => {
-              // limit resize
-              //selected.radius
-              if (newBox.width < 30 || newBox.height < 30) {
-                return oldBox;
-              }
-              
-              return newBox;
-            }}
-          />}
+            <Transformer
+              ref={transformerRef}
+              rotateEnabled={false}
+              enabledAnchors={[
+                "top-right",
+                "top-left",
+                "bottom-left",
+                "bottom-right",
+              ]}
+              // onTransformEnd={onTransformEnd}
+              boundBoxFunc={(oldBox, newBox) => {
+                // limit resize
+                //selected.radius
+                if (newBox.width < 30 || newBox.height < 30) {
+                  return oldBox;
+                }
+
+                return newBox;
+              }}
+            />
+          }
         </Layer>
       </Stage>
     </div>
   );
 }
-
 
 export default App;
