@@ -572,6 +572,11 @@ function App() {
             <Transformer
               ref={transformerRef}
               rotateEnabled={false}
+              anchorStroke={"black"}
+              anchorCornerRadius={100}
+              anchorStroke={.25}
+              anchorSize={11}
+              borderStroke={"black"}
               enabledAnchors={[
                 "top-right",
                 "top-left",
