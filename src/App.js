@@ -14,7 +14,7 @@ import useImage from "use-image";
 import "./App.css";
 import { stages } from "konva/lib/Stage";
 
-Konva.pixelRatio = 1;
+Konva.pixelRatio = 2;
 
 const clamp = (x, min, max) => {
   return Math.min(Math.max(x, min), max);
@@ -45,6 +45,7 @@ function App() {
       stroke: "black",
       scale: 1,
       isDragging: false,
+      type: Rect,
       // isDragging: true;
     },
   ]);
@@ -58,7 +59,7 @@ function App() {
     console.log(e.target, background.current);
     if (id) {
       // console.log(e.target)
-      // setselected(e.target)
+      setselected(e.target)
       transformerRef.current.nodes([e.target]);
     } else if (
       e.target === stage.current ||
@@ -78,10 +79,11 @@ function App() {
 
   const onTransformEnd = (e) => {
     const id = e.target.id();
-    shapes[id].x = e.target.x();
-    shapes[id].y = e.target.y();
-    shapes[id].scale = e.target.scale().x;
-    setShapes(shapes);
+    const s = shapes.slice()
+    s[id].x = e.target.x();
+    s[id].y = e.target.y();
+    s[id].scale = Math.floor(e.target.scaleX()*100)/100;
+    setShapes(s);
   };
 
   const refs = useRef([]);
@@ -115,6 +117,7 @@ function App() {
           y={i * width}
           strokeWidth={stroke}
           stroke="black"
+          perfectDrawEnabled={true}
           ref={(e) => refs.current.push(e)}
         />
       );
@@ -360,13 +363,13 @@ function App() {
     // console.log(e.evt.ctrlKey,'holding',e.evt.wheelDelta,e.evt.wheelDeltaY)
 
     if (e.evt.ctrlKey) {
-      zoom(e.evt,canvas);
+      zoom(e.evt,stage);
 
-      const current_scale = background.current.scaleX()
-      const bounds = {lower:0.25,higher:32}
+      // const current_scale = background.current.scaleX()
+      // const bounds = {lower:0.25,higher:32}
       
-      console.log('s',canvas.current.scaleX())
-      zoom(e.evt,background);
+      // console.log('s',canvas.current.scaleX())
+      // zoom(e.evt,background);
 
       // if (Math.floor(current_scale) % 3 === 0 && current_scale > 1) {
       //   console.log("increasing",current_scale)
@@ -393,7 +396,8 @@ function App() {
       const boundx = 3000 * stage.current.scale().x;
       const boundy = 3000 * stage.current.scale().y;
       
-      const layers = [canvas,background]
+      // const layers = [canvas,background]
+      const layers = [stage]
 
       for (var i=0;i<layers.length;i++) { 
         const layer = layers[i]
@@ -467,6 +471,36 @@ function App() {
     return () => stage.current.off("wheel", onwheel);
   }, [oScale, grid, refs,backgroundoffset]);
 
+  // <Circle 
+  //     id={2}
+  //     key={2}
+  //     x={0}
+  //     y={0}
+  //     _useStrictMode
+  //     draggable
+  //     radius={20}
+  //     stroke={"black"}
+  //     onMouseDown={select}
+  //     onTap={select}
+  //     onDragMove={onDragMove}
+  //     onTransformEnd={onTransformEnd}
+  //   />
+
+  useEffect(()=> {
+    shapes.push({
+      id:`${shapes.length}`,
+      key:`${shapes.length}`,
+      x:0,
+      y:0,
+      width: 50,
+      height: 50,
+      stroke: "black",
+      scale: 1,
+      isDragging: false,
+      type: Circle
+    })
+  },[])
+
   useEffect(() => {
     // stage.current.addEventListener('wheel', function(e) {
     //   console.log(e)
@@ -485,13 +519,15 @@ function App() {
       // zoom(e)
     });
 
-    c.addEventListener(
-      "touchstart",
-      (e) => {
-        console.log("e", e);
-      },
-      { passive: true }
-    );
+    // c.addEventListener("")
+
+    // c.addEventListener(
+    //   "touchstart",
+    //   (e) => {
+    //     console.log("e", e);
+    //   },
+    //   { passive: true }
+    // );
 
     window.addEventListener("resize", () => {
       drawgrid();
@@ -538,14 +574,16 @@ function App() {
         onMouseDown={select}
       >
         <Layer ref={background}>
-          {grid.shapes}
           {/* {console.log('rerenering first layer')} */}
+          {}
         </Layer>
-        <Layer ref={canvas}>
+        <Layer ref={canvas}> 
           {/* {console.log('rerenering second layer')} */}
+          {grid.shapes}
+          {}
           {shapes.map((shape) => (
             //console.log("x",shape.x),
-            <Circle
+            <shape.type
               _useStrictMode
               onMouseDown={select}
               onTap={select}
@@ -557,15 +595,17 @@ function App() {
               // onDragMove={onDrageMove}
               draggable
               onDragEnd={onDragEnd}
-              onTransform={(e) => console.log(e)}
               // dragBoundFunc={(p)=>dragBound(shape.width,p,shape.height)}
               key={shape.id}
               id={shape.id}
               x={shape.x}
               y={shape.y}
               scale={{ x: shape.scale, y: shape.scale }}
+              width={shape.width}
+              height={shape.height}
+              strokeWidth={0.25}
               stroke={shape.stroke}
-              radius={shape.width}
+              // radius={shape.width}
             />
           ))}
           {
@@ -574,9 +614,11 @@ function App() {
               rotateEnabled={false}
               anchorStroke={"black"}
               anchorCornerRadius={100}
-              anchorStroke={.25}
+              anchorStrokeWidth={.25}
               anchorSize={11}
               borderStroke={"black"}
+              borderStrokeWidth={2}
+              ignoreStroke
               enabledAnchors={[
                 "top-right",
                 "top-left",
@@ -590,6 +632,10 @@ function App() {
                 if (newBox.width < 30 || newBox.height < 30) {
                   return oldBox;
                 }
+
+                console.log(newBox)
+                // console.log(selected.id())
+                
 
                 return newBox;
               }}
