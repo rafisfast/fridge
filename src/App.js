@@ -1,6 +1,7 @@
 import React, { createRef, StrictMode, useCallback, useEffect, useReducer, useRef, useState,
 } from "react";
 import { Stage, Layer, Rect, Line, Circle, Transformer, Text } from "react-konva";
+import { onTransform, onTextTransform, onRectTransform } from "./Events";
 import Helmet from "react-helmet";
 import Konva from "konva";
 import useImage from "use-image";
@@ -527,6 +528,7 @@ function App() {
       ref={e=>r.push(e)}
       draggable
       onMouseDown={select}
+      onTransform={onRectTransform}
       />,
       <Text
       name={"Text"}
@@ -541,6 +543,7 @@ function App() {
       ref={e=>r.push(e)}
       draggable
       onMouseDown={select}
+      onTransform={onTextTransform}
       />
     );
     setShapes({objects:s,refs:r})
