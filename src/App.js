@@ -1,13 +1,6 @@
-import React, {
-  createRef,
-  StrictMode,
-  useCallback,
-  useEffect,
-  useReducer,
-  useRef,
-  useState,
+import React, { createRef, StrictMode, useCallback, useEffect, useReducer, useRef, useState,
 } from "react";
-import { Stage, Layer, Rect, Line, Circle, Transformer } from "react-konva";
+import { Stage, Layer, Rect, Line, Circle, Transformer, Text } from "react-konva";
 import Helmet from "react-helmet";
 import Konva from "konva";
 import useImage from "use-image";
@@ -27,46 +20,65 @@ const L = () => {
 function App() {
   const [selected, setselected] = useState("");
   const [dragging, setdragging] = useState();
+  const [anchors, setanchors] = useState([])
   const [grid, setgrid] = useState({ shapes: [] });
   const [offset, setoffset] = useState({ x: 0, y: 0 });
   const [style, setstyle] = useState({});
+  const refs = useRef([]);
 
   const background = useRef();
   const scrollContainer = useRef();
   //const [Size,setSize] = useState({width:document.documentElement.clientWidth*2,height:document.documentElement.clientHeight*2})
 
-  const [shapes, setShapes] = useState([
-    {
-      id: "0",
-      x: 200,
-      y: 200,
-      width: 150,
-      height: 150,
-      stroke: "black",
-      scale: 1,
-      isDragging: false,
-      type: Rect,
-      // isDragging: true;
-    },
-  ]);
+  // {
+  //   id: "0",
+  //   x: 200,
+  //   y: 200,
+  //   width: 150,
+  //   height: 150,
+  //   stroke: "black",
+  //   scale: 1,
+  //   isDragging: false,
+  //   type: Rect,
+  //   // isDragging: true;
+  // }
+
+  const [shapes, setShapes] = useState({objects : [], refs : []});
 
   const transformerRef = useRef();
+  const texttransformerRef = useRef();
 
   const select = (e) => {
     // console.log(e.target.getAbsolutePosition())
     const id = e.target.id();
+    const type = e.target.name()
     // console.log(e.target, stage)
-    console.log(e.target, background.current);
+    console.log(e.target, background.current, e.target.id(),e.target.name());
     if (id) {
       // console.log(e.target)
+      if (type) {
+        if (type === "Rect") {
+          setanchors(["top-right","top-left","bottom-left","bottom-right","middle-right","middle-left","top-center","bottom-center"])
+          transformerRef.current.nodes([e.target]);
+          texttransformerRef.current.nodes([]);
+        } else if (type === "Text") {
+          setanchors(["middle-right","middle-left","top-center","bottom-center"])
+          texttransformerRef.current.nodes([e.target]);
+          transformerRef.current.nodes([]);
+        } else {
+          setanchors(["top-right","top-left","bottom-left","bottom-right"])
+          transformerRef.current.nodes([e.target]);
+          texttransformerRef.current.nodes([])
+        }
+      }
       setselected(e.target)
-      transformerRef.current.nodes([e.target]);
     } else if (
       e.target === stage.current ||
       e.target === background.current ||
       e.target.parent === background.current
     ) {
       transformerRef.current.nodes([]);
+      texttransformerRef.current.nodes([])
       setselected();
     }
     // console.log(e.target.id())
@@ -79,14 +91,13 @@ function App() {
 
   const onTransformEnd = (e) => {
     const id = e.target.id();
-    const s = shapes.slice()
+    const s = shapes.objects.slice()
     s[id].x = e.target.x();
     s[id].y = e.target.y();
     s[id].scale = Math.floor(e.target.scaleX()*100)/100;
     setShapes(s);
   };
-
-  const refs = useRef([]);
+  
 
   const griddraw = (z) => {
     // console.log(refs)
@@ -118,7 +129,7 @@ function App() {
           strokeWidth={stroke}
           stroke="black"
           perfectDrawEnabled={true}
-          ref={(e) => refs.current.push(e)}
+          // ref={(e) => refs.current.push(e)}
         />
       );
       // g.ref.push(ref)
@@ -153,7 +164,7 @@ function App() {
           y={-(boundsY + window.innerHeight)}
           strokeWidth={stroke}
           stroke="black"
-          ref={(e) => refs.current.push(e)}
+          // ref={(e) => refs.current.push(e)}
         />
       );
       // g.ref.push(ref)
@@ -437,14 +448,14 @@ function App() {
 
     const nScale = Math.floor(stage.current.scale().x);
     if (nScale % 1 === 0 && nScale != oScale) {
-      refs.current.map((e, i) => {
-        if (i % 2 === 0) {
-          // e.hide()
-        }
-        if (nScale >= 3) {
-          e.strokeWidth(0.05);
-        }
-      });
+      // refs.current.map((e, i) => {
+      //   if (i % 2 === 0) {
+      //     // e.hide()
+      //   }
+      //   if (nScale >= 3) {
+      //     e.strokeWidth(0.05);
+      //   }
+      // });
       if (nScale % 2 === 0) {
         // griddraw(nScale)
       }
@@ -486,19 +497,65 @@ function App() {
   //     onTransformEnd={onTransformEnd}
   //   />
 
+
+  // id:`${shapes.objects.length}`,
+  //     key:`${shapes.objects.length}`,
+  //     x:0,
+  //     y:0,
+  //     width: 50,
+  //     height: 50,
+  //     stroke: "black",
+  //     scale: 1,
+  //     isDragging: false,
+  //     type: Circle
   useEffect(()=> {
-    shapes.push({
-      id:`${shapes.length}`,
-      key:`${shapes.length}`,
-      x:0,
-      y:0,
-      width: 50,
-      height: 50,
-      stroke: "black",
-      scale: 1,
-      isDragging: false,
-      type: Circle
-    })
+    const s = shapes.objects.slice()
+    const r = shapes.refs.slice()
+    s.push(
+      <Rect 
+      // _u=
+      name={"Rect"}
+      id = {`${s.length}`}
+      key = {`${s.length}`}
+      x = {0}
+      y = {0}
+      width = {200}
+      height = {200}
+      radius = {200}
+      stroke = {"black"}
+      scale = {1}
+      ref={e=>r.push(e)}
+      draggable
+      onMouseDown={select}
+      />,
+      <Text
+      name={"Text"}
+      text={"text here"}
+      keepratio={true}
+      id = {`${s.length+1}`}
+      key = {`${s.length+1}`}
+      fontSize={20}
+      width={200}
+      x = {0}
+      y = {0}
+      ref={e=>r.push(e)}
+      draggable
+      onMouseDown={select}
+      />
+    );
+    setShapes({objects:s,refs:r})
+    // shapes.objects.push({
+    //   id:`${shapes.objects.length}`,
+    //   key:`${shapes.objects.length}`,
+    //   x:0,
+    //   y:0,
+    //   width: 50,
+    //   height: 50,
+    //   stroke: "black",
+    //   scale: 1,
+    //   isDragging: false,
+    //   type: Text
+    // })
   },[])
 
   useEffect(() => {
@@ -580,8 +637,8 @@ function App() {
         <Layer ref={canvas}> 
           {/* {console.log('rerenering second layer')} */}
           {grid.shapes}
-          {}
-          {shapes.map((shape) => (
+          {shapes.objects.map((e)=>{return e})}
+          {/* {shapes.map((shape) => (
             //console.log("x",shape.x),
             <shape.type
               _useStrictMode
@@ -607,7 +664,25 @@ function App() {
               stroke={shape.stroke}
               // radius={shape.width}
             />
-          ))}
+          ))} */}
+          {
+            <Transformer 
+            ref={texttransformerRef}
+            rotateEnabled={false}
+            anchorStroke={"black"}
+            anchorCornerRadius={100}
+            anchorStrokeWidth={.25}
+            anchorSize={11}
+            borderStroke={"black"}
+            borderStrokeWidth={2}
+            ignoreStroke
+            boundBoxFunc = {(oldBox, newBox)=> {
+              newBox.width = Math.max(30, newBox.width);
+              return newBox;
+            }}
+            enabledAnchors={anchors}
+            />
+          }
           {
             <Transformer
               ref={transformerRef}
@@ -619,13 +694,7 @@ function App() {
               borderStroke={"black"}
               borderStrokeWidth={2}
               ignoreStroke
-              enabledAnchors={[
-                "top-right",
-                "top-left",
-                "bottom-left",
-                "bottom-right",
-              ]}
-              // onTransformEnd={onTransformEnd}
+              enabledAnchors={anchors}
               boundBoxFunc={(oldBox, newBox) => {
                 // limit resize
                 //selected.radius
@@ -639,6 +708,7 @@ function App() {
 
                 return newBox;
               }}
+              // onTransformEnd={onTransformEnd}
             />
           }
         </Layer>
