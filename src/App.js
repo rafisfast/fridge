@@ -1,25 +1,19 @@
-import React, { createRef, StrictMode, useCallback, useEffect, useReducer, useRef, useState,
+import React, { createContext, createRef, StrictMode, useCallback, useEffect, useReducer, useRef, useState,
 } from "react";
 import { Stage, Layer, Rect, Line, Circle, Transformer, Text } from "react-konva";
-import { onTransform, onTextTransform, onRectTransform } from "./Events";
+import { onTransform, onTextTransform, onRectTransform, onSelect, onTextDoublePress } from "./Events";
 import Helmet from "react-helmet";
 import Konva from "konva";
 import useImage from "use-image";
 import "./App.css";
 import { stages } from "konva/lib/Stage";
+import { clamp } from './lib'
 
 Konva.pixelRatio = 2;
 
-const clamp = (x, min, max) => {
-  return Math.min(Math.max(x, min), max);
-};
-
-const L = () => {
-  return useEffect(() => {});
-};
-
 function App() {
-  const [selected, setselected] = useState("");
+
+  const [selected, setselected] = useState("")
   const [dragging, setdragging] = useState();
   const [anchors, setanchors] = useState([])
   const [grid, setgrid] = useState({ shapes: [] });
@@ -49,56 +43,10 @@ function App() {
   const transformerRef = useRef();
   const texttransformerRef = useRef();
 
-  const select = (e) => {
-    // console.log(e.target.getAbsolutePosition())
-    const id = e.target.id();
-    const type = e.target.name()
-    // console.log(e.target, stage)
-    console.log(e.target, background.current, e.target.id(),e.target.name());
-    if (id) {
-      // console.log(e.target)
-      if (type) {
-        if (type === "Rect") {
-          setanchors(["top-right","top-left","bottom-left","bottom-right","middle-right","middle-left","top-center","bottom-center"])
-          transformerRef.current.nodes([e.target]);
-          texttransformerRef.current.nodes([]);
-        } else if (type === "Text") {
-          setanchors(["middle-right","middle-left","top-center","bottom-center"])
-          texttransformerRef.current.nodes([e.target]);
-          transformerRef.current.nodes([]);
-        } else {
-          setanchors(["top-right","top-left","bottom-left","bottom-right"])
-          transformerRef.current.nodes([e.target]);
-          texttransformerRef.current.nodes([])
-        }
-      }
-      setselected(e.target)
-    } else if (
-      e.target === stage.current ||
-      e.target === background.current ||
-      e.target.parent === background.current
-    ) {
-      transformerRef.current.nodes([]);
-      texttransformerRef.current.nodes([])
-      setselected();
-    }
-    // console.log(e.target.id())
-    // setselected(id)
-    // setselected(e.target.id())
-  };
+  
   // const [stageSize,setStageSize] = useState()
   const stage = useRef();
   const canvas = useRef();
-
-  const onTransformEnd = (e) => {
-    const id = e.target.id();
-    const s = shapes.objects.slice()
-    s[id].x = e.target.x();
-    s[id].y = e.target.y();
-    s[id].scale = Math.floor(e.target.scaleX()*100)/100;
-    setShapes(s);
-  };
-  
 
   const griddraw = (z) => {
     // console.log(refs)
@@ -223,6 +171,13 @@ function App() {
 
   useEffect(() => {
     griddraw();
+    // unmounting
+    return () => {
+      const g = { shapes : []}
+      setgrid(g)
+      const s = { objects : [], refs : []}
+      setShapes(s)
+    }
   }, []);
 
   const [oScale, setOScale] = useState(1);
@@ -527,13 +482,12 @@ function App() {
       scale = {1}
       ref={e=>r.push(e)}
       draggable
-      onMouseDown={select}
+      onMouseDown={(e)=>onSelect(e,[setselected,setanchors,background,transformerRef,texttransformerRef,stage])}
       onTransform={onRectTransform}
       />,
       <Text
       name={"Text"}
       text={"text here"}
-      keepratio={true}
       id = {`${s.length+1}`}
       key = {`${s.length+1}`}
       fontSize={20}
@@ -542,8 +496,10 @@ function App() {
       y = {0}
       ref={e=>r.push(e)}
       draggable
-      onMouseDown={select}
+      onMouseDown={(e)=>onSelect(e,[setselected,setanchors,background,transformerRef,texttransformerRef,stage])}
       onTransform={onTextTransform}
+      onDblClick={e=>onTextDoublePress(e,[texttransformerRef,setShapes,shapes,stage])}
+      onDblTap={e=>onTextDoublePress(e,[texttransformerRef,setShapes,shapes,stage])}
       />
     );
     setShapes({objects:s,refs:r})
@@ -578,7 +534,6 @@ function App() {
       e.preventDefault();
       // zoom(e)
     });
-
     // c.addEventListener("")
 
     // c.addEventListener(
@@ -597,6 +552,7 @@ function App() {
     document.body.style.webkitTransform = scale; // Chrome, Opera, Safari
     document.body.style.msTransform = scale; // IE 9
     document.body.style.transform = scale; // General
+
   }, []);
 
   const onDragMove = (e) => {
@@ -631,7 +587,7 @@ function App() {
         width={window.innerWidth}
         height={window.innerHeight}
         draggable
-        onMouseDown={select}
+        onMouseDown={(e)=>onSelect(e,[setselected,setanchors,background,transformerRef,texttransformerRef,stage])}
       >
         <Layer ref={background}>
           {/* {console.log('rerenering first layer')} */}
