@@ -21,6 +21,7 @@ export const onTransform = () => {
 }
 
 export const onTextDoublePress = (e,props) => {
+  
   const [texttransformerRef,setShapes,shapes,stage] = props
   const textNode = e.target
 
