@@ -10,13 +10,13 @@ import {
 } from './slices/refs'
 
 import { Stage, Layer, Rect, Line, Circle, Transformer, Text, Group } from "react-konva";
-import { onTransform, Transformlock, onSelect, onTextDoublePress, onStageDrag } from "./events";
+import { onTransform, Transformlock, onSelect, onTextDoublePress, onStageDrag } from "./events.js";
 
 import Helmet from "react-helmet";
 import Konva from "konva";
 import "./App.css";
 
-import { clamp } from './lib'
+import { clamp } from './lib.js'
 
 Konva.pixelRatio = 2;
 
