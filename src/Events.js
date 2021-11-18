@@ -1,19 +1,16 @@
 import React, { createContext, useContext } from 'react';
 
-const Transformlock = (e) => {
+import store from './stores/store'
+import { setselected, setanchors } from './slices/selection';
+import { clamp } from './lib'
+
+
+export const Transformlock = (e) => {
   const layer = e.target
   layer.width(layer.width() * layer.scaleX())
   layer.height(layer.height() * layer.scaleY())
   layer.scaleX(1)
   layer.scaleY(1)
-}
-
-export const onTextTransform = (e) => {
-  Transformlock(e)
-}
-
-export const onRectTransform = (e) => {
-  Transformlock(e)
 }
 
 export const onTransform = () => {
@@ -154,41 +151,78 @@ export const onTransformEnd = (e,props) => {
   setshapes(s);
 }
 
-export const onSelect = (e,props) => {
-  // console.log(e.target.getAbsolutePosition())
-  const [setselected,setanchors,background,transformerRef,texttransformerRef,stage] = props
-  const id = e.target.id();
+export const onSelect = (e) => {
+
   const type = e.target.name()
-  // console.log(e.target, stage)
-  console.log(e.target, background.current, e.target.id(),e.target.name());
-  if (id) {
-    // console.log(e.target)
-    if (type) {
-      if (type === "Rect") {
-        setanchors(["top-right","top-left","bottom-left","bottom-right","middle-right","middle-left","top-center","bottom-center"])
-        transformerRef.current.nodes([e.target]);
-        texttransformerRef.current.nodes([]);
-      } else if (type === "Text") {
-        setanchors(["middle-right","middle-left","top-center","bottom-center"])
-        texttransformerRef.current.nodes([e.target]);
-        transformerRef.current.nodes([]);
-      } else {
-        setanchors(["top-right","top-left","bottom-left","bottom-right"])
-        transformerRef.current.nodes([e.target]);
-        texttransformerRef.current.nodes([])
-      }
-      setselected(e.target)
+
+  if (e.target.id()) {
+
+    store.dispatch(setselected(e.target.id()))
+
+    switch(type) {
+      case "Rect":
+        store.dispatch(setanchors(["top-right","top-left","bottom-left","bottom-right","middle-right","middle-left","top-center","bottom-center"]))
+        break;
+      case "Text":
+        store.dispatch(setanchors(["middle-right","middle-left","top-center","bottom-center"]))
+        break
+      default:
+        store.dispatch(setanchors(["top-right","top-left","bottom-left","bottom-right"]))
     }
-  } else if (
-    e.target === stage.current ||
-    e.target === background.current ||
-    e.target.parent === background.current
-  ) {
-    transformerRef.current.nodes([]);
-    texttransformerRef.current.nodes([])
-    setselected();
+
   }
-  // console.log(e.target.id())
-  // setselected(id)
-  // setselected(e.target.id())
-};
+  
+}
+
+export const onStageDrag = (e,stage) => {
+
+  const { deltaX: dx, deltaY: dy } = e.evt;
+
+  const boundx = 3000 * stage.current.scale().x;
+  const boundy = 3000 * stage.current.scale().y;
+  // const layers = [canvas,background]
+  const {x,y} = stage.current.getAbsolutePosition()
+    // layer.current.x(x - dx)
+  stage.current.x(clamp(x - dx, -(boundx - window.innerWidth), boundx));
+  stage.current.y(clamp(y - dy, -(boundy - window.innerHeight), boundy));
+
+}
+
+// export const onSelect = (e,props) => {
+//   // console.log(e.target.getAbsolutePosition())
+//   const [setselected,setanchors,background,transformerRef,texttransformerRef,stage] = props
+//   const id = e.target.id();
+//   const type = e.target.name()
+//   // console.log(e.target, stage)
+//   console.log(e.target, background.current, e.target.id(),e.target.name());
+//   if (id) {
+//     // console.log(e.target)
+//     if (type) {
+//       if (type === "Rect") {
+//         setanchors(["top-right","top-left","bottom-left","bottom-right","middle-right","middle-left","top-center","bottom-center"])
+//         transformerRef.current.nodes([e.target]);
+//         texttransformerRef.current.nodes([]);
+//       } else if (type === "Text") {
+//         setanchors(["middle-right","middle-left","top-center","bottom-center"])
+//         texttransformerRef.current.nodes([e.target]);
+//         transformerRef.current.nodes([]);
+//       } else {
+//         setanchors(["top-right","top-left","bottom-left","bottom-right"])
+//         transformerRef.current.nodes([e.target]);
+//         texttransformerRef.current.nodes([])
+//       }
+//       setselected(e.target)
+//     }
+//   } else if (
+//     e.target === stage.current ||
+//     e.target === background.current ||
+//     e.target.parent === background.current
+//   ) {
+//     transformerRef.current.nodes([]);
+//     texttransformerRef.current.nodes([])
+//     setselected();
+//   }
+//   // console.log(e.target.id())
+//   // setselected(id)
+//   // setselected(e.target.id())
+// };

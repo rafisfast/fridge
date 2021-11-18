@@ -1,39 +1,50 @@
 import React, { createContext, createRef, StrictMode, useCallback, useEffect, useReducer, useRef, useState
 } from "react";
+
+import { useSelector, useDispatch } from 'react-redux'
+
+import {
+  add,
+  remove,
+  reset
+} from './slices/refs'
+
 import { Stage, Layer, Rect, Line, Circle, Transformer, Text, Group } from "react-konva";
-import { onTransform, onTextTransform, onRectTransform, onSelect, onTextDoublePress } from "./Events";
+import { onTransform, Transformlock, onSelect, onTextDoublePress, onStageDrag } from "./events";
+
 import Helmet from "react-helmet";
 import Konva from "konva";
 import "./App.css";
+
 import { clamp } from './lib'
 
 Konva.pixelRatio = 2;
 
-// const Note = () => {
+const Note = () => {
 
-//   /*
+  // /*
 
-//     A note should be an object detailing what kind of shapes are in there and what values they hold
-//     [
-//       dragging = false,
-//       {
-//         Type: Text,
+  //   A note should be an object detailing what kind of shapes are in there and what values they hold
+  //   [
+  //     dragging = false,
+  //     {
+  //       Type: Text,
         
-//       }, 
-//       {
-//         Type: Rect,
-//         Width: 0,
-//         Height: 0,
-//         Scale: 0,
-//         Color: 0,
-//         Selectable: True,
-//         Draggable: True,
-//       }
-//     ]
+  //     }, 
+  //     {
+  //       Type: Rect,
+  //       Width: 0,
+  //       Height: 0,
+  //       Scale: 0,
+  //       Color: 0,
+  //       Selectable: True,
+  //       Draggable: True,
+  //     }
+  //   ]
 
-//   */
+  // */
 
-// }
+}
 
 // const Notes = () => {
 
@@ -87,10 +98,8 @@ Konva.pixelRatio = 2;
 //     scale = {1}
 //     ref={e=>r.push(e)}
 //     onTransform={onRectTransform}
-//     />)
-
-  
-
+//     />
+//   )
 //   return(
 
 //     notes.map(()=>{
@@ -105,17 +114,18 @@ Konva.pixelRatio = 2;
 
 // }
 
-const Grid = () => {
+const Grid = (props) => {
 
-  const [grid, setgrid] = useState({ shapes: [] });
   const [boundsX,boundsY] = [3000, 6000 + window.innerHeight]
   const [width,stroke] = [120, 0.1]
+
+  const g = []
   
   var key = 0
 
   for (var i= -boundsX / width; i < (boundsX + window.innerHeight) / width; i++) {
     key++
-    grid.shapes.push(
+    g.push(
       <Line
         key={key}
         hitStrokeWidth={0}
@@ -132,7 +142,7 @@ const Grid = () => {
 
   for (var i = -boundsY / width; i < boundsY / width; i++) { 
     key++
-    grid.shapes.push(
+    g.push(
       <Line
         key={key}
         hitStrokeWidth={0}
@@ -147,15 +157,72 @@ const Grid = () => {
   }
 
   return (
-    grid.shapes  
+    g
   )
 
 }
 
 const App = () => {
 
+  const dispatch = useDispatch()
+
+  const anchors   = useSelector(state=>state.selection.anchors)
+  const selected  = useSelector(state=>state.selection.selected)
+  
+  const shape  = useRef()
   const stage  = useRef()
   const canvas = useRef()
+  const transformer = useRef()
+
+  useEffect(()=> {
+
+    const c = canvas.current.getCanvas()._canvas;
+    
+    // PREVENT DEFAULT
+
+    c.addEventListener("gesturestart", (e) => {
+      // console.log(e,'gesture started')
+      e.preventDefault();
+    });
+
+    c.addEventListener("mousewheel", (e) => {
+      e.preventDefault();
+      // zoom(e)
+    });
+
+    // EVENTS
+
+    stage.current.on("wheel", (e)=> {
+      const { deltaX: dx, deltaY: dy } = e.evt;
+      e.evt.preventDefault();
+    
+      if (e.evt.ctrlKey) {
+        
+        zoom(e.evt,stage);
+
+      } else {
+        onStageDrag(e,stage)
+      // 
+      }
+    })
+
+    window.addEventListener("resize", () => {
+    });
+
+    var scale = "scale(1)";
+    document.body.style.webkitTransform = scale; // Chrome, Opera, Safari
+    document.body.style.msTransform = scale; // IE 9
+    document.body.style.transform = scale; // General
+
+  },[])
+
+  useEffect(()=> {
+    if (selected === shape.current.id() && selected !== "stage") {
+      transformer.current.nodes([shape.current]) 
+    } else {
+      transformer.current.nodes([])
+    }
+  },[selected])
 
   const zoom = (e) => {
 
@@ -196,16 +263,49 @@ const App = () => {
         ></meta>
       </Helmet>
       <Stage
+        id={"stage"}
         ref={stage}
         className="Stage"
         width={window.innerWidth}
         height={window.innerHeight}
+        onMouseDown={(e)=>onSelect(e)}
+        dragBoundFunc={(pos)=>{
+          return {x: clamp(pos.x,-(3000 - window.innerWidth),3000), y: clamp(pos.y,-(3000 - window.innerHeight),3000)}
+        }}
         draggable
-        // onMouseDown={(e)=>onSelect(e,[setselected,setanchors,background,transformerRef,texttransformerRef,stage])}
         >
       <Layer ref={canvas}>
         <Grid />
         {/* <Notes /> */}
+        <Group 
+        draggable
+        onSelect={(e)=>onSelect(e)}>
+        <Rect
+          id={"0"}
+          name={"Rect"}
+          ref={shape}
+          x={0}
+          y={0}
+          width={50}
+          height={50}
+          stroke = {"black"}
+          strokeWidth={0.5}
+        />
+        </Group>
+        <Transformer
+          ref={transformer}
+          rotateEnabled={false}
+          anchorStroke={"black"}
+          anchorCornerRadius={100}
+          anchorStrokeWidth={.25}
+          anchorSize={11}
+          borderStroke={"black"}
+          borderStrokeWidth={2}
+          ignoreStroke
+          enabledAnchors={anchors}
+          onTransform={Transformlock}
+          // onTransformEnd={onTransformEnd}
+        />
       </Layer>
       </Stage>
     </div>
